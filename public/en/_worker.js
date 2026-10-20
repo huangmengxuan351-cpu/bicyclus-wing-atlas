@@ -57,8 +57,19 @@ async function dynamic(request,env) {
   const prefix=upstream.pathname.replace(/\/$/,'');
   const target=new URL(prefix+incoming.pathname+incoming.search,upstream.origin);
   try {
-    const response=await fetch(target,{method:request.method,headers,body:['GET','HEAD'].includes(request.method)?undefined:request.body,redirect:'manual'});
+    let response,attempts=0;
+    const retryable=['GET','HEAD'].includes(request.method);
+    for(let attempt=0;attempt<2;attempt++) {
+      attempts++;
+      try {
+        response=await fetch(target,{method:request.method,headers,body:retryable?undefined:request.body,redirect:'manual'});
+        if(!retryable||attempt||![502,503,504,520,521,522,523,524,525,526].includes(response.status))break;
+        await response.body?.cancel();
+      } catch(error) {if(!retryable||attempt)throw error;}
+      await new Promise(resolve=>setTimeout(resolve,750));
+    }
     const resultHeaders=new Headers(response.headers);resultHeaders.set('Cache-Control','no-store');resultHeaders.set('X-Atlas-Language',LANGUAGE);
+    resultHeaders.set('X-Atlas-Origin-Attempts',String(attempts));
     const location=resultHeaders.get('Location');
     if(location?.startsWith(upstream.origin+prefix+'/'))resultHeaders.set('Location',incoming.origin+location.slice((upstream.origin+prefix).length));
     return new Response(response.body,{status:response.status,headers:resultHeaders});

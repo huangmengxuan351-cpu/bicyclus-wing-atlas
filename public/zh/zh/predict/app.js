@@ -328,7 +328,7 @@ async function readService(url) {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const response = await fetch(url, { cache: "no-store" });
-      if (attempt || ![502, 503, 504, 520, 521, 522, 523, 524].includes(response.status)) return response;
+      if (attempt || ![502, 503, 504, 520, 521, 522, 523, 524, 525, 526].includes(response.status)) return response;
       await response.body?.cancel();
     } catch (error) {
       if (attempt) throw error;
