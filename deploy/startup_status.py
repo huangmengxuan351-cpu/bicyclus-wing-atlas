@@ -2,6 +2,7 @@
 import json
 import os
 import shutil
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -16,6 +17,29 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlsplit(self.path).path
+        if path == '/__bootstrap_wait' and self.command == 'GET':
+            # Function Compute freezes background work between invocations.
+            # A bounded provisioning request lets first-time initialization run.
+            # It is called during deployment only, never as a permanent pinger.
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/x-ndjson; charset=utf-8')
+            self.send_header('Cache-Control', 'no-store')
+            self.end_headers()
+            deadline = time.monotonic() + 45
+            try:
+                while time.monotonic() < deadline:
+                    value = {'ready': False, 'phase': 'initializing'}
+                    for file in (STATUS, STATE / 'bootstrap_transfer.json'):
+                        try:
+                            value.update(json.loads(file.read_text(encoding='utf-8')))
+                        except (OSError, ValueError):
+                            pass
+                    self.wfile.write((json.dumps(value) + '\n').encode())
+                    self.wfile.flush()
+                    time.sleep(5)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+            return
         if path in ('/', '/healthz') or path in ('/zh/healthz', '/en/healthz'):
             code = 200
         else:

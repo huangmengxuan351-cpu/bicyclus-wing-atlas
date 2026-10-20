@@ -2,6 +2,8 @@
 import hashlib
 import json
 import os
+import threading
+import time
 from pathlib import Path
 
 
@@ -56,8 +58,39 @@ def ensure_data(folder):
     api.download_file(repo, repo_type='dataset', file_path='data_manifest.json',
                       revision=revision, local_dir=folder, expected_sha256=expected_hash)
     manifest = json.loads((folder / 'data_manifest.json').read_text(encoding='utf-8'))
+    state = Path(os.environ.get('ATLAS_STATE', '/mnt/workspace/wing-atlas-state'))
+    state.mkdir(parents=True, exist_ok=True)
+    lock = threading.Lock()
+    progress = {'phase': 'installing_private_data', 'files_completed_this_transfer': 0,
+                'bytes_observed_this_transfer': 0, 'expected_files': manifest['file_count']}
+    last_saved = [0.0]
+
+    class TransferProgress:
+        def __init__(self, filename, file_size):
+            self.ended = False
+
+        def update(self, size):
+            with lock:
+                progress['bytes_observed_this_transfer'] += size
+                self.save()
+
+        def end(self):
+            with lock:
+                if not self.ended:
+                    progress['files_completed_this_transfer'] += 1
+                    self.ended = True
+                self.save()
+
+        def save(self):
+            if time.monotonic() - last_saved[0] >= 5:
+                (state / 'bootstrap_transfer.json').write_text(json.dumps(progress), encoding='utf-8')
+                last_saved[0] = time.monotonic()
+
     api.download_repo(repo, repo_type='dataset', revision=revision, local_dir=folder,
-                      allow_patterns=[item['path'] for item in manifest['files']], max_workers=4)
+                      allow_patterns=[item['path'] for item in manifest['files']], max_workers=8,
+                      progress_callbacks=[TransferProgress])
+    progress['phase'] = 'verifying_private_data'
+    (state / 'bootstrap_transfer.json').write_text(json.dumps(progress), encoding='utf-8')
     verify_manifest(folder, expected_hash)
     marker.write_text(expected_hash)
 
