@@ -21,22 +21,25 @@ class Handler(BaseHTTPRequestHandler):
             # Function Compute freezes background work between invocations.
             # A bounded provisioning request lets first-time initialization run.
             # It is called during deployment only, never as a permanent pinger.
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/x-ndjson; charset=utf-8')
-            self.send_header('Cache-Control', 'no-store')
-            self.end_headers()
+            # Delay headers until this bounded request completes. Some hosted
+            # adapters end the compute invocation as soon as headers are sent.
             deadline = time.monotonic() + 45
+            while time.monotonic() < deadline:
+                time.sleep(1)
+            value = {'ready': False, 'phase': 'initializing'}
+            for file in (STATUS, STATE / 'bootstrap_transfer.json', STATE / 'bootstrap_verification.json'):
+                try:
+                    value.update(json.loads(file.read_text(encoding='utf-8')))
+                except (OSError, ValueError):
+                    pass
+            body = (json.dumps(value) + '\n').encode()
             try:
-                while time.monotonic() < deadline:
-                    value = {'ready': False, 'phase': 'initializing'}
-                    for file in (STATUS, STATE / 'bootstrap_transfer.json'):
-                        try:
-                            value.update(json.loads(file.read_text(encoding='utf-8')))
-                        except (OSError, ValueError):
-                            pass
-                    self.wfile.write((json.dumps(value) + '\n').encode())
-                    self.wfile.flush()
-                    time.sleep(5)
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.send_header('Content-Length', str(len(body)))
+                self.send_header('Cache-Control', 'no-store')
+                self.end_headers()
+                self.wfile.write(body)
             except (BrokenPipeError, ConnectionResetError):
                 pass
             return

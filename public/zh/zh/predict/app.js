@@ -325,10 +325,16 @@ function renderResult(payload) {
 }
 
 async function loadModelInfo() {
-  const response = await fetch("/api/model-info");
+  const response = await fetch("/api/model-info", { cache: "no-store" });
   const payload = await response.json();
+  if (!response.ok || payload.ready === false) {
+    modelStatus.textContent = "服务准备中";
+    modelStatus.className = "status-pill";
+    modelInfo.textContent = "预测服务正在准备或暂不可用，图谱仍可浏览。请稍后刷新此页面重试。";
+    return;
+  }
   const models = payload.models || {};
-  const allLoaded = Object.values(models).every((item) => item.loaded);
+  const allLoaded = ["wing_type", "hindwing_stage", "forewing_stage"].every((name) => models[name]?.loaded === true);
   modelStatus.textContent = allLoaded ? "就绪" : "检查模型";
   modelStatus.className = `status-pill ${allLoaded ? "ready" : ""}`;
   modelInfo.innerHTML = `

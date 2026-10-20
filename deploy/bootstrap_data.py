@@ -17,13 +17,21 @@ def verify_manifest(folder, expected_hash):
     if file_sha(manifest) != expected_hash:
         raise RuntimeError('Private data manifest differs from the configured release.')
     value = json.loads(manifest.read_text(encoding='utf-8'))
-    for item in value['files']:
+    state = Path(os.environ.get('ATLAS_STATE', '/mnt/workspace/wing-atlas-state'))
+    state.mkdir(parents=True, exist_ok=True)
+    verified_bytes = 0
+    for index, item in enumerate(value['files'], 1):
         relative = Path(item['path'])
         if relative.is_absolute() or '..' in relative.parts:
             raise RuntimeError('Invalid private manifest path.')
         path = folder / relative
         if not path.is_file() or path.stat().st_size != item['bytes'] or file_sha(path) != item['sha256']:
             raise RuntimeError('Private dataset verification failed: ' + item['path'])
+        verified_bytes += item['bytes']
+        if index % 25 == 0 or index == len(value['files']):
+            (state / 'bootstrap_verification.json').write_text(json.dumps({
+                'phase': 'verifying_private_data', 'files_verified': index,
+                'bytes_verified': verified_bytes, 'expected_files': value['file_count']}), encoding='utf-8')
     print('Private dataset verified:', value['file_count'], 'files; originals remain outside the public repository.', flush=True)
 
 
@@ -60,6 +68,7 @@ def ensure_data(folder):
     manifest = json.loads((folder / 'data_manifest.json').read_text(encoding='utf-8'))
     state = Path(os.environ.get('ATLAS_STATE', '/mnt/workspace/wing-atlas-state'))
     state.mkdir(parents=True, exist_ok=True)
+    (state / 'bootstrap_verification.json').unlink(missing_ok=True)
     lock = threading.Lock()
     progress = {'phase': 'installing_private_data', 'files_completed_this_transfer': 0,
                 'bytes_observed_this_transfer': 0, 'expected_files': manifest['file_count']}

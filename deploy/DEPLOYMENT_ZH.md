@@ -4,7 +4,7 @@
 
 ## 当前进度
 
-魔搭 API 身份已核验为 `EVA030806`，私有数据集与免费 Docker 创空间均已实际创建。Docker 镜像已在魔搭成功构建，运行状态为 Running；目前 `ATLAS_SETUP_ONLY=true`，只提供准备状态，尚未开启完整预测。全量私有数据已上传并完成远端核验（含清单 4,140 个文件、19,966,259,403 字节），文件大小和 SHA-256 全部匹配，匿名读取清单返回 404。后台运行盘的容量与最终功能仍待启用后实测。Cloudflare 两个项目已创建、展示资源已上传，最终生产发布和 GitHub 自动更新尚未完成。原有 eva-hmx.chatgpt.site 地址不能作为脱离本机的验收证据。
+两个展示站已生产发布：中文 `https://bicyclus-wing-atlas-zh.pages.dev/`、英文 `https://bicyclus-wing-atlas-en.pages.dev/`，27 项公网展示检查通过。代码已发布 GitHub，两个发布包也已在 GitHub 运行器重建并通过完整哈希校验。魔搭镜像已构建运行，Secrets 已配置，`ATLAS_SETUP_ONLY=false`，首次初始化正在下载验证完整数据，真实预测尚待验收。全量私有数据远端核验通过：含清单 4,140 文件、19,966,259,403 字节，大小与 SHA-256 全部匹配，匿名读清单返回 404。Cloudflare 自动发布仍需专用 Pages Edit Token；不需要重复插件授权或 GitHub 登录。完整体系以工作目录 `FINAL_REVIEW_ZH.md` 的逐项结果为准。
 
 此账号当前资源 API 确认 `platform/2v-cpu-8g-mem` 为免费 Docker 档位，已实际完成构建。运行容器返回虚拟文件系统容量，不能由磁盘数字推断真实存储额度；仍须完成全量私有数据下载、哈希校验及运行测试。免费休眠和额度限制仍然适用。
 

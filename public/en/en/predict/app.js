@@ -320,10 +320,16 @@ function renderResult(payload) {
 }
 
 async function loadModelInfo() {
-  const response = await fetch("/api/model-info");
+  const response = await fetch("/api/model-info", { cache: "no-store" });
   const payload = await response.json();
+  if (!response.ok || payload.ready === false) {
+    modelStatus.textContent = "service preparing";
+    modelStatus.className = "status-pill";
+    modelInfo.textContent = "The prediction service is preparing or temporarily unavailable. Atlas browsing remains available. Refresh this page to retry.";
+    return;
+  }
   const models = payload.models || {};
-  const allLoaded = Object.values(models).every((item) => item.loaded);
+  const allLoaded = ["wing_type", "hindwing_stage", "forewing_stage"].every((name) => models[name]?.loaded === true);
   modelStatus.textContent = allLoaded ? "ready" : "check models";
   modelStatus.className = `status-pill ${allLoaded ? "ready" : ""}`;
   modelInfo.innerHTML = `
