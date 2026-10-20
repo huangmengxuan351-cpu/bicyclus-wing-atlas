@@ -4,7 +4,7 @@
 
 ## 当前进度
 
-两个展示站已生产发布：中文 `https://bicyclus-wing-atlas-zh.pages.dev/`、英文 `https://bicyclus-wing-atlas-en.pages.dev/`，27 项公网展示检查通过。代码已发布 GitHub，两个发布包也已在 GitHub 运行器重建并通过完整哈希校验。魔搭镜像已构建运行，Secrets 已配置，`ATLAS_SETUP_ONLY=false`，首次初始化正在下载验证完整数据，真实预测尚待验收。全量私有数据远端核验通过：含清单 4,140 文件、19,966,259,403 字节，大小与 SHA-256 全部匹配，匿名读清单返回 404。Cloudflare 自动发布仍需专用 Pages Edit Token；不需要重复插件授权或 GitHub 登录。完整体系以工作目录 `FINAL_REVIEW_ZH.md` 的逐项结果为准。
+两个展示站已生产发布：中文 `https://bicyclus-wing-atlas-zh.pages.dev/`、英文 `https://bicyclus-wing-atlas-en.pages.dev/`，27 项公网展示检查通过。直连云端 API 与经双语 Pages 的功能验收各通过 29 项，涵盖上传预测、人工校准、访客隔离、预览和密码下载原图的 SHA-256 比对。云端 4,139 个依赖文件已逐个校验通过。代码已发布 GitHub，两个发布包已在 GitHub 运行器重建并验证全部预览哈希。魔搭 Actions Secret 及后台更新变量已配置；Cloudflare 自动发布仍需专用 Pages Edit Token，无需重复插件授权或 GitHub 登录。全量私有数据远端大小、SHA-256 与匿名访问拒绝均通过。实际自动发布步骤与运行状态以工作目录 `FINAL_REVIEW_ZH.md` 为准。
 
 此账号当前资源 API 确认 `platform/2v-cpu-8g-mem` 为免费 Docker 档位，已实际完成构建。运行容器返回虚拟文件系统容量，不能由磁盘数字推断真实存储额度；仍须完成全量私有数据下载、哈希校验及运行测试。免费休眠和额度限制仍然适用。
 
@@ -35,7 +35,7 @@ python deploy/upload_private_data.py --data-dir <protected_data目录> --repo <�
 
 ## 三、Docker 创空间与后续构建
 
-已创建后端空间 `EVA030806/bicyclus-wing-atlas-backend`，使用免费 2 核 8 GB Docker 档位，镜像已构建并运行。Secrets 已获授权并写入，`ATLAS_SETUP_ONLY=false`，正在初始化全量私有数据，尚未通过真实预测验收。代码中不放私有数据；代码同步到创空间默认 `master` 分支。应用监听 `0.0.0.0:7860`，只选择账号中明确标记免费的 Docker 硬件。
+后端空间 `EVA030806/bicyclus-wing-atlas-backend` 使用免费 2 核 8 GB Docker 档位。Secrets 已授权写入，`ATLAS_SETUP_ONLY=false`，完整数据校验与真实预测、校准、下载验收通过，重启已复用校验后的数据。代码同步到创空间默认 `master` 分支，应用监听 `0.0.0.0:7860`；只选择账号中明确标记免费的硬件。
 
 配置以下普通变量：
 
@@ -89,7 +89,7 @@ GitHub 仓库 Settings → Secrets and variables → Actions：
 
 `.github/workflows/pages.yml` 分别构建和发布两个独立 Pages 项目；静态预览包下载后逐个核验 SHA-256。`.github/workflows/modelscope.yml` 更新已有 Docker 创空间，先检查账号 API 返回的免费硬件状态，不创建或切换付费资源。代码通过普通 Git 推送保留远端历史，不强制推送。
 
-两站已完成首次生产发布和 27 项公网检查。Pages 工作流可先在 GitHub 运行器验证预览包构建；自动发布步骤在 `PAGES_BOOTSTRAP_READY=true` 后启用。现有魔搭 Token 已写入 Actions Secret；Cloudflare 专用 Pages Edit Token 尚待控制台创建与本机隐藏输入。插件 OAuth 接口不支持创建 API Token，无需重复连接插件。完成后台真实验收后才启用后台更新变量。公开源文件与科学数据的使用授权是两件事，软件许可证仍应由项目所有者明确。
+两站已完成首次生产发布和 27 项公网检查。Pages 工作流已在 GitHub 运行器验证两个完整预览包构建；自动发布步骤在 `PAGES_BOOTSTRAP_READY=true` 后启用。魔搭 Actions Secret 及后台更新变量已配置。Cloudflare 专用 Pages Edit Token 尚待控制台创建与本机隐藏输入；插件 OAuth 接口不支持创建 API Token，无需重复连接插件。直连 API 与经 Pages 的功能验收各通过 29 项。公开源文件与科学数据的使用授权是两件事，软件许可证仍应由项目所有者明确。
 
 ## 六、修改后台数据与最终验收
 
