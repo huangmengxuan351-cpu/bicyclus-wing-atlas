@@ -21,9 +21,9 @@
 
 `repository` 是可交给 GitHub 的代码目录。它与相邻的 `protected_data` 必须保持分离。不要把整个 `platform_full_cloud_20261020` 工作目录上传到公共仓库。
 
-GitHub 当前已确认的账号为 `huangmengxuan351-cpu`，连接可读，但尚无可访问仓库。本次准备的独立代码仓库需要创建 GitHub 远端后再推送；目前并未确认已发布远端代码。GitHub 公共仓库中只保存代码、界面、小型图谱元数据和减小分辨率后的示意图。286 个展示预览包由 CI 从已发布 Pages 站点按 SHA-256 获取，不需要塞入 GitHub Git 历史。
+代码已发布到 `https://github.com/huangmengxuan351-cpu/bicyclus-wing-atlas`。GitHub 官方 CLI 已确认登录；无需重新授权。公共仓库只保存代码、界面、小型图谱元数据和减小分辨率后的示意图。286 个展示预览包由 CI 从已发布 Pages 站点按 SHA-256 获取，不进入 Git 历史。
 
-已创建正式私有数据集 `EVA030806/bicyclus-wing-atlas-private-data`，私有可见性、文件写入、授权读回和匿名访问拦截已通过；完整数据容量尚待实际上传确认。此包包含最终图谱、原始数组、最终模型及运行依赖，不包含被移除的 hth 数据。
+已创建正式私有数据集 `EVA030806/bicyclus-wing-atlas-private-data`，完整上传、私有可见性、授权读回和匿名访问拦截已通过。此包包含最终图谱、原始数组、最终模型及运行依赖，不包含被移除的 hth 数据；数据集容量通过不等于容器运行盘验收通过。
 
 `deploy/upload_private_data.py` 只向已有且 API 确认私有的数据集上传，先核验每个文件。它从本地环境变量 `MODELSCOPE_API_KEY` 读取写入凭据；不要把凭据写入命令行参数、代码或公共环境变量。调用格式为：
 
@@ -35,7 +35,7 @@ python deploy/upload_private_data.py --data-dir <protected_data目录> --repo <�
 
 ## 三、Docker 创空间与后续构建
 
-已创建正式公开后端空间 `EVA030806/bicyclus-wing-atlas-backend`，使用免费 2 核 8 GB Docker 档位，Docker 镜像构建已成功，当前处于 Running 的准备模式。代码中不放私有数据；Docker 采用本项目 `Dockerfile`。代码同步到创空间默认 `master` 分支。应用监听 `0.0.0.0:7860`，平台保留的 8080 不使用。只选择账号中明确标记免费的 Docker 硬件。
+已创建后端空间 `EVA030806/bicyclus-wing-atlas-backend`，使用免费 2 核 8 GB Docker 档位，镜像已构建并运行。Secrets 已获授权并写入，`ATLAS_SETUP_ONLY=false`，正在初始化全量私有数据，尚未通过真实预测验收。代码中不放私有数据；代码同步到创空间默认 `master` 分支。应用监听 `0.0.0.0:7860`，只选择账号中明确标记免费的 Docker 硬件。
 
 配置以下普通变量：
 
@@ -68,7 +68,7 @@ python deploy/upload_private_data.py --data-dir <protected_data目录> --repo <�
 
 已实测魔搭用于程序调用的地址为 `https://studio-eva030806-bicyclus-wing-atlas-backend.api-inference.modelscope.net`。中文版 Pages 变量 `ATLAS_ORIGIN` 在该地址后追加 `/zh`，英文版追加 `/en`。普通 `.ms.show` 浏览器地址拒绝程序请求，不能直接作为本项目的 Pages 转发源站。
 
-两种 Pages 还需要分别在服务端 Secret 中设置 `MODELSCOPE_STUDIO_TOKEN`。Worker 仅在请求魔搭 API 专用域名时加入该 Bearer 凭据；它不会进入浏览器，也不会替代原图下载密码。现有魔搭 Token 写入 Cloudflare Secrets 属于单独的凭据存储目的地，需明确授权后操作。不要把 Token 放入普通 Variables、wrangler 配置、HTML 或 GitHub 源码。
+两种 Pages 的服务端 Secret `MODELSCOPE_STUDIO_TOKEN` 均已获授权并配置。Worker 仅在请求魔搭 API 专用域名时加入该 Bearer 凭据；它不会进入浏览器，也不会替代原图下载密码。不要把 Token 放入普通 Variables、wrangler 配置、HTML 或 GitHub 源码。
 
 不得保留本机隧道或旧 Sites 地址作为回退。
 
@@ -89,7 +89,7 @@ GitHub 仓库 Settings → Secrets and variables → Actions：
 
 `.github/workflows/pages.yml` 分别构建和发布两个独立 Pages 项目；静态预览包下载后逐个核验 SHA-256。`.github/workflows/modelscope.yml` 更新已有 Docker 创空间，先检查账号 API 返回的免费硬件状态，不创建或切换付费资源。代码通过普通 Git 推送保留远端历史，不强制推送。
 
-首次操作需要在真实账号内确认 GitHub Actions 凭据与 API 权限，当前工作流尚未在远端实际运行。Pages 工作流在首次完整静态发布前保持关闭，避免尝试从尚不存在的站点获取预览包。公开仓库发布前还应由项目所有者明确软件许可证；公开源文件与科学数据的使用授权是两件事。
+两站已完成首次生产发布和 27 项公网检查。Pages 工作流可先在 GitHub 运行器验证预览包构建；自动发布步骤在 `PAGES_BOOTSTRAP_READY=true` 后启用。现有魔搭 Token 已写入 Actions Secret；Cloudflare 专用 Pages Edit Token 尚待控制台创建与本机隐藏输入。插件 OAuth 接口不支持创建 API Token，无需重复连接插件。完成后台真实验收后才启用后台更新变量。公开源文件与科学数据的使用授权是两件事，软件许可证仍应由项目所有者明确。
 
 ## 六、修改后台数据与最终验收
 
@@ -103,10 +103,10 @@ GitHub 仓库 Settings → Secrets and variables → Actions：
 
 ## 七、凭据配置边界
 
-代码与数据上传授权不等同于把同一凭据同步给所有服务。当前自动审批已拒绝复制既有本地下载密码到魔搭；该操作未执行。程序已改为生成独立云端下载密码，等待对以下具体存储目的地的明确授权：
+以下存储目的地均已获用户明确授权。旧本地下载密码没有复制；云端使用单独生成的密码：
 
-- 魔搭 `EVA030806/bicyclus-wing-atlas-backend` 私有 Secrets：`ATLAS_DATA_TOKEN`、`ATLAS_DOWNLOAD_PASSWORD`。
-- 两个 Cloudflare Pages 项目的私有 Secret：`MODELSCOPE_STUDIO_TOKEN`，用于服务端调用魔搭。
-- 项目 GitHub 仓库 Actions Secrets：`MODELSCOPE_API_KEY`、`CLOUDFLARE_API_TOKEN`，用于自动更新。GitHub 仓库尚未创建，不能把未知仓库视为已授权目的地。
+- 魔搭 `EVA030806/bicyclus-wing-atlas-backend` 私有 Secrets：`ATLAS_DATA_TOKEN`、`ATLAS_DOWNLOAD_PASSWORD`，已配置。
+- 两个 Cloudflare Pages 项目的私有 Secret：`MODELSCOPE_STUDIO_TOKEN`，已配置。
+- GitHub `huangmengxuan351-cpu/bicyclus-wing-atlas` Actions Secrets：`MODELSCOPE_API_KEY` 已配置，`CLOUDFLARE_API_TOKEN` 等待账号中创建专用令牌。
 
-上述凭据不应在聊天里提供。GitHub 插件目前可读但没有创建仓库和管理 Actions Secrets 的工具；可通过本机 `account_connection/connect_github.ps1` 完成官方 GitHub CLI 浏览器授权，不会在聊天中显示凭据。
+上述凭据不应在聊天里提供。GitHub CLI 登录已完成；不要重复设备授权。Cloudflare Token 的具体创建与隐藏输入步骤在工作目录 `CLOUDFLARE_CI_TOKEN_ZH.md`。
