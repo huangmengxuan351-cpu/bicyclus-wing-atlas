@@ -319,8 +319,21 @@ function renderResult(payload) {
   updateAtlasDestination(payload);
 }
 
+async function readService(url) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      if (attempt || ![502, 503, 504, 520, 521, 522, 523, 524].includes(response.status)) return response;
+      await response.body?.cancel();
+    } catch (error) {
+      if (attempt) throw error;
+    }
+    await new Promise(resolve => setTimeout(resolve, 750));
+  }
+}
+
 async function loadModelInfo() {
-  const response = await fetch("/api/model-info", { cache: "no-store" });
+  const response = await readService("/api/model-info");
   const payload = await response.json();
   if (!response.ok || payload.ready === false) {
     modelStatus.textContent = "service preparing";
@@ -341,7 +354,7 @@ async function loadModelInfo() {
 }
 
 async function loadHistory() {
-  const response = await fetch("/api/history");
+  const response = await readService("/api/history");
   const payload = await response.json();
   historyBody.innerHTML = "";
   (payload.items || []).forEach((row) => {
@@ -359,7 +372,7 @@ async function loadHistory() {
 
 async function loadRestoredResult(runId) {
   if (!runId) return;
-  const response = await fetch(`/api/result/${encodeURIComponent(runId)}`, { cache: "no-store" });
+  const response = await readService(`/api/result/${encodeURIComponent(runId)}`);
   const payload = await response.json();
   if (!response.ok) throw new Error(payload.error || "Saved prediction could not be restored");
   renderResult(payload);
