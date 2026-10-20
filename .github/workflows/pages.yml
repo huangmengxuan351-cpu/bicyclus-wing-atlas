@@ -11,7 +11,6 @@ concurrency:
   cancel-in-progress: false
 jobs:
   deploy:
-    if: vars.PAGES_BOOTSTRAP_READY == 'true' && vars.CLOUDFLARE_ACCOUNT_ID != ''
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -31,7 +30,11 @@ jobs:
           ATLAS_ORIGIN: ${{ vars.ATLAS_ORIGIN }}
         run: python deploy/build_pages.py --language ${{ matrix.language }}
       - name: Publish to the existing independent Pages project
+        if: vars.PAGES_BOOTSTRAP_READY == 'true' && vars.CLOUDFLARE_ACCOUNT_ID != ''
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: npx --no-install wrangler pages deploy dist/${{ matrix.language }} --project-name bicyclus-wing-atlas-${{ matrix.language }} --branch main
+      - name: Verify the published public display and download guard
+        if: vars.PAGES_BOOTSTRAP_READY == 'true' && vars.CLOUDFLARE_ACCOUNT_ID != ''
+        run: python deploy/verify_pages.py --language ${{ matrix.language }}

@@ -5,7 +5,7 @@ import hashlib
 import json
 import os
 import shutil
-import urllib.request
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,9 +40,11 @@ def main():
         if args.pack_dir:
             shutil.copy2(args.pack_dir / item['name'], destination)
         else:
-            request = urllib.request.Request(manifest['base_url'] + item['name'], headers={'User-Agent': 'WingAtlas-CI/1'})
-            with urllib.request.urlopen(request, timeout=120) as response, destination.open('wb') as output:
-                shutil.copyfileobj(response, output)
+            # Use the runner's actual HTTP client. Python urllib is rejected by
+            # the edge on some networks even when the public asset is available.
+            subprocess.run(['curl', '--fail', '--silent', '--show-error', '--location',
+                            '--max-time', '120', '--retry', '3', '--output', str(destination),
+                            manifest['base_url'] + item['name']], check=True)
         if destination.stat().st_size != item['bytes'] or digest(destination) != item['sha256']:
             raise RuntimeError('Public preview pack verification failed: ' + item['name'])
 
