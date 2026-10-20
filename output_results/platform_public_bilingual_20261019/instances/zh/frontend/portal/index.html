@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>翅型预测与基因表达图谱 / V2</title>
+    <link rel="stylesheet" href="/zh/portal/styles.css?v=20260716-1" />
+    <link rel="stylesheet" href="/zh/portal/home-workspaces.css" />
+  </head>
+  <body class="home-page">
+    <main class="home-shell">
+      <header class="home-hero">
+        <span class="eyebrow">独立研究工作平台 / V2</span>
+        <h1>蝴蝶翅盘图谱与预测平台</h1>
+        <p>使用已有分类模型辅助判读翅型与阶段，或浏览具有来源记录的基因表达图谱，并比较不同处理结果。</p>
+      </header>
+
+      <section class="entry-grid" aria-label="平台功能入口">
+        <a class="entry-card predict-card" href="/zh/predict/">
+          <span class="card-index">01</span>
+          <div>
+            <span class="card-kicker">分类预测流程</span>
+            <h2>翅型与阶段预测</h2>
+            <p>上传DAPI图像，检查掩膜并按需校准配准结果，随后查看预测及对应的标准图谱。</p>
+          </div>
+          <span class="card-action">进入预测 <b aria-hidden="true">&#8594;</b></span>
+        </a>
+
+        <a class="entry-card atlas-card" href="/zh/atlas/">
+          <span class="card-index">02</span>
+          <div>
+            <span class="card-kicker">表达图谱工作区</span>
+            <h2>基因表达图谱</h2>
+            <p>查看单基因热图或强度点位图，并在不叠加解剖背景的情况下比较处理分支、阶段和前后翅。</p>
+          </div>
+          <span class="card-action">浏览表达 <b aria-hidden="true">&#8594;</b></span>
+        </a>
+        <a class="entry-card anatomy-card" href="/zh/anatomy/">
+          <span class="card-index">03</span><div><span class="card-kicker">解剖结构参照</span>
+            <h2>解剖与多基因图层</h2><p>浏览标准DAPI与最终选定翅脉，叠加不同颜色的基因层，调整可见性并比较显示方式。</p></div>
+          <span class="card-action">查看图层叠加 <b aria-hidden="true">&#8594;</b></span>
+        </a>
+      </section>
+
+      <footer class="home-footer">
+        <span id="modelState">正在读取图谱目录…</span>
+        <span>独立中文版</span>
+      </footer>
+    </main>
+    <script src="/zh/portal/home.js?v=20260716-1"></script>
+  </body>
+</html>

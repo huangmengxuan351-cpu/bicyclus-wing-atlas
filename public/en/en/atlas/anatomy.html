@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Standard Anatomy &amp; Expression Layers</title><link rel="stylesheet" href="/en/atlas/styles.css"></head>
+<body data-workspace="anatomy">
+  <nav class="topbar"><a class="brand" href="/en/">Wing <i>Atlas</i><small>ANATOMY &amp; LAYER WORKSPACE / V2</small></a><div><a id="workspaceSwitch" href="/en/atlas/">Gene expression</a><a class="current-page" href="/en/anatomy/">Anatomy &amp; layers</a><a href="/en/predict/">Predict a wing</a><button id="copyLink">Copy view link</button></div></nav>
+  <main class="shell">
+    <aside class="sidebar">
+      <span class="eyebrow">01 / Standard anatomy</span><h1>Place signal<br>in context.</h1><p class="intro">Six standard wings. Confirmed vein layers. Independent gene overlays.</p>
+      <fieldset><legend>Wing family</legend><div class="segments"><button data-wing="forewing">Forewing</button><button data-wing="hindwing">Hindwing</button></div></fieldset>
+      <fieldset><legend>Developmental stage</legend><div class="segments"><button data-stage="0.5">0.5</button><button data-stage="0.75">0.75</button><button data-stage="1.0">1.0</button></div></fieldset>
+      <label>Display preset<select id="displayPreset"><option value="structure">Structure first / recommended</option><option value="signal">Signal first</option><option value="balanced">Balanced layers</option><option value="custom">Custom controls</option></select></label>
+      <details class="anatomy-settings" id="anatomySettings" open><summary>DAPI &amp; vein layers</summary>
+        <label class="check"><input id="showDapi" type="checkbox" checked>Standard DAPI</label>
+        <label>DAPI source<select id="dapiSource"><option value="display">Brightness-normalized display</option><option value="original">Original intensity</option></select></label>
+        <label>DAPI brightness <output id="dapiValue">52%</output><input id="dapiBrightness" type="range" min="0" max="1" step="0.01" value="0.52"></label>
+        <label class="check"><input id="showVein" type="checkbox" checked>Confirmed vein layer</label>
+        <label>Vein style<select id="veinView"><option value="ribbon">Natural ribbon</option><option value="outline">Outline / display only</option></select></label>
+        <div class="color-row"><label>Vein color<input id="veinColor" type="color" value="#f5ecc8"></label></div>
+        <label>Vein opacity <output id="veinValue">66%</output><input id="veinOpacity" type="range" min="0" max="1" step="0.01" value="0.66"></label>
+      </details>
+      <details class="multi-settings" id="multiSettings" open><summary>Gene layers / optional</summary>
+        <label class="check"><input id="showGenes" type="checkbox">Show selected gene layers</label>
+        <label>Inspect a gene<select id="gene" disabled></select></label><button id="addGene" class="wide-button">Add this gene to overlay</button>
+        <label>Processing<select id="variant"><option value="early_soft_q20">Early soft-q20</option><option value="baseline">Baseline</option><option value="bilateral_soft_q20">Bilateral + soft-q20</option></select></label>
+        <label>Representation<select id="representation"><option value="heat">Expression heatmap</option><option value="points">Intensity particles</option></select></label>
+        <label>Gene opacity <output id="opacityValue">60%</output><input id="opacity" type="range" min="0" max="1" step="0.01" value="0.60"></label>
+        <div id="geneLayers"></div>
+        <label>Gene blend<select id="blendMode"><option value="source-over">Natural alpha layers</option><option value="screen">Screen / mixed overlap</option></select></label>
+        <label>Layer order<select id="layerOrder"><option value="vein-top">Vein above genes</option><option value="gene-top">Genes above vein</option></select></label>
+        <small>Up to four genes, each with its own color. Choose none to view anatomy alone.</small>
+      </details>
+      <div class="sidebar-note"><strong id="datasetCount">Loading archive...</strong><p>All controls affect display only. No new registration, vein repair or expression fitting.</p></div>
+    </aside>
+    <section class="workspace">
+      <header class="workspace-heading"><div><span class="eyebrow">02 / Anatomy &amp; expression</span><h2 id="viewTitle">Loading standard wings</h2><p id="viewSubtitle"></p></div><span id="statusBadge" class="badge">Confirmed vein package</span></header>
+      <div class="mode-tabs" aria-label="Comparison layout"><button data-mode="single">Layer workspace</button><button data-mode="styles">Compare display styles</button><button data-mode="stages">Across stages</button><button data-mode="wings">Fore / Hind</button></div>
+      <div class="toolbar"><div><button id="zoomOut" aria-label="Zoom out">-</button><output id="zoomValue">100%</output><button id="zoomIn" aria-label="Zoom in">+</button><button id="fit">Fit</button><button id="fullscreen">Fullscreen</button></div><span>Drag to pan &middot; Scroll to zoom &middot; Linked viewports</span></div>
+      <div id="notice" class="notice" role="status" hidden></div><div id="tiles" class="tiles single" aria-live="polite"></div>
+      <div class="legend" id="legend"><span>Independent layer colors</span><div id="anatomyLegend" class="gene-legend"></div><small>Color mixing is qualitative; it does not prove cellular co-expression or absolute abundance.</small></div>
+      <footer class="workspace-foot"><span id="modeNote">Approved vein geometry is unchanged.</span><a id="fullComparison" href="#" target="_blank" rel="noopener">Approved vein + DAPI</a></footer>
+    </section>
+    <aside class="evidence"><span class="eyebrow">03 / Provenance</span><h2>Behind the layers</h2><dl id="facts"></dl>
+      <div class="review-note"><strong>Registration &amp; anatomy status</strong><p id="reviewStatus"></p><small>Representative anatomy, not independent anatomical ground truth.</small></div>
+      <details open><summary>Processing explained</summary><p id="methodHelp"></p></details>
+      <details><summary>Selected gene diagnostics</summary><dl id="metrics"></dl><small>Retention and coverage are not accuracy.</small></details>
+      <details open><summary>Download selected gene</summary><div id="downloads" class="download-list"></div></details>
+      <details open><summary>Download anatomy</summary><div id="anatomyDownloads" class="download-list"></div></details>
+      <div class="report-links"><a href="/anatomy-assets/display_comparison.html" target="_blank" rel="noopener">Six-wing display comparison</a><a href="/atlas-assets/main/index.html" target="_blank" rel="noopener">Combined archive gallery</a><a id="reportLink" target="_blank" rel="noopener">Selected gene report</a><a id="experimentLink" target="_blank" rel="noopener">Historical experiments</a><a id="manifestLink">Sample metadata (CSV)</a></div>
+    </aside>
+  </main><script src="/en/atlas/workspaces.js"></script>
+<script src="/en/access-display.js"></script></body></html>

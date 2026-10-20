@@ -1,0 +1,14 @@
+{
+  "additional_archives": [
+    {
+      "key": "optixsaltkv",
+      "path": "output_results/gene_atlas_sop_run/optix_sal_tkv_20261009_complete"
+    },
+    {
+      "key": "vgwgwnt10",
+      "path": "output_results/gene_atlas_sop_run/vg_wg_wnt10_20261013_complete"
+    }
+  ],
+  "hidden_genes": ["rho", "rho2", "rho3", "hth"],
+  "instructions": "Add validated consolidated archives with an alphanumeric key and a workspace-relative path. Later entries supersede complete duplicate groups without fusing batches. Refresh the atlas page to load new data."
+}

@@ -1,0 +1,10 @@
+.git
+.github
+public
+.env*
+protected_data
+private_data*
+*.pkl
+*.npy
+*.npz
+__pycache__

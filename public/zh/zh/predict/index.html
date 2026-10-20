@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DAPI翅型与阶段预测</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <nav class="portal-nav" aria-label="平台导航">
+        <a href="/zh/">翅盘图谱平台</a>
+        <a href="/zh/atlas/">浏览标准图谱</a>
+      </nav>
+      <section class="workbench">
+        <aside class="control-panel">
+          <div class="brand">
+            <div>
+              <h1>DAPI翅型与阶段预测</h1>
+              <p>前后翅类型与对应阶段概率</p>
+            </div>
+            <span class="status-pill" id="modelStatus">加载中</span>
+          </div>
+
+          <form id="predictForm" class="upload-form">
+            <label class="drop-zone" for="imageInput">
+              <input id="imageInput" name="image" type="file" accept="image/*,.tif,.tiff" required />
+              <span class="drop-title">选择DAPI图像</span>
+              <span class="drop-subtitle" id="imageName">PNG / JPG / TIFF</span>
+            </label>
+
+            <div class="mask-row">
+              <span>可选掩膜</span>
+              <label class="file-picker" for="maskInput">
+                <input id="maskInput" name="mask" type="file" accept="image/*,.tif,.tiff" />
+                <span class="file-picker-button">选择文件</span>
+                <span class="file-picker-name" id="maskName">未选择文件</span>
+              </label>
+            </div>
+
+            <button class="primary-button" type="submit">
+              <span>运行预测</span>
+            </button>
+          </form>
+
+          <div class="model-card" id="modelInfo"></div>
+        </aside>
+
+        <section class="result-panel">
+          <div class="summary-strip">
+            <div>
+              <span class="eyebrow">最可能结果</span>
+              <h2 id="summaryTitle">等待上传</h2>
+            </div>
+            <div class="decision" id="decisionBadge">等待输入</div>
+          </div>
+
+          <div class="grid-two">
+            <div class="metric-block">
+              <h3>翅型概率</h3>
+              <div id="familyBars" class="bars"></div>
+            </div>
+            <div class="metric-block">
+              <h3 id="selectedStageTitle">当前翅型的阶段概率</h3>
+              <div id="selectedStageBars" class="bars"></div>
+            </div>
+          </div>
+
+          <section class="alignment-card" id="alignmentCard">
+            <div class="alignment-head">
+              <div>
+                <span class="eyebrow">自动配准</span>
+                <h3 id="alignmentTitle">等待配准</h3>
+              </div>
+              <div class="alignment-actions">
+                <span class="alignment-pill" id="alignmentBadge">等待输入</span>
+                <button id="toggleManual" class="ghost-button" type="button">人工校准</button>
+              </div>
+            </div>
+            <div class="confidence-line">
+              <div class="track"><div class="fill" id="alignmentFill" style="width:0%"></div></div>
+              <strong id="alignmentConfidence">0.0%</strong>
+            </div>
+            <p id="alignmentNote" class="alignment-note">系统自动调整方向、镜像、尺度与位置。</p>
+
+            <div id="manualPanel" class="manual-panel" hidden>
+              <div class="manual-guide">
+                <div class="manual-preview-shell">
+                  <img id="manualGrayPreview" alt="人工校准预览" />
+                  <img id="manualMaskPreview" class="mask-overlay" alt="人工掩膜叠加" />
+                  <img id="referenceContourPreview" class="reference-contour" alt="独立于翅型预测的解剖方向参照" />
+                  <div class="alignment-legend">
+                    <span><i class="legend-line yellow"></i>固定层：解剖方向参照</span>
+                    <span><i class="legend-line cyan"></i>可移动层：当前翅盘掩膜</span>
+                  </div>
+                </div>
+                <p class="guide-note">将远端突出部朝左、翅基朝右、上缘朝上、下缘朝下。黄色方向参照独立于翅型和阶段预测。</p>
+              </div>
+              <div class="manual-controls">
+                <label>翅型
+                  <select id="manualFamily">
+                    <option value="forewing">前翅</option>
+                    <option value="hindwing">后翅</option>
+                  </select>
+                </label>
+                <label>旋转角度 <output id="rotationValue">0°</output>
+                  <input id="rotationControl" type="range" min="-180" max="180" step="1" value="0" />
+                </label>
+                <label>缩放比例 <output id="scaleValue">1.00×</output>
+                  <input id="scaleControl" type="range" min="0.50" max="1.50" step="0.01" value="1" />
+                </label>
+                <label>水平位置 <output id="translateXValue">0 px</output>
+                  <input id="translateXControl" type="range" min="-512" max="512" step="8" value="0" />
+                </label>
+                <label>垂直位置 <output id="translateYValue">0 px</output>
+                  <input id="translateYControl" type="range" min="-512" max="512" step="8" value="0" />
+                </label>
+                <label class="check-control"><input id="flipControl" type="checkbox" /> 水平翻转</label>
+                <div class="manual-buttons">
+                  <button id="resetManual" class="ghost-button" type="button">重置</button>
+                  <button id="applyManual" class="primary-button" type="button">应用校准并重新预测</button>
+                </div>
+                <p id="manualActionStatus" class="manual-action-status" aria-live="polite"></p>
+              </div>
+            </div>
+          </section>
+
+          <section id="atlasDecisionPanel" class="atlas-decision-panel" hidden>
+            <div>
+              <span class="eyebrow">对应图谱</span>
+              <h3 id="atlasDecisionTitle">打开图谱前需要复核</h3>
+              <p id="atlasDecisionNote">请从按模型概率排序的六种翅型与阶段组合中选择。</p>
+            </div>
+            <div id="atlasCandidateGrid" class="atlas-candidate-grid"></div>
+          </section>
+
+          <div class="image-grid">
+            <figure>
+              <figcaption>灰度图</figcaption>
+              <img id="grayPreview" alt="灰度预览" />
+            </figure>
+            <figure>
+              <figcaption>掩膜</figcaption>
+              <img id="maskPreview" alt="掩膜预览" />
+            </figure>
+            <figure>
+              <figcaption>配准图像</figcaption>
+              <img id="alignedGrayPreview" alt="配准灰度预览" />
+            </figure>
+            <figure>
+              <figcaption>配准掩膜</figcaption>
+              <img id="alignedMaskPreview" alt="配准掩膜预览" />
+            </figure>
+          </div>
+
+          <section class="evidence-card">
+            <div>
+              <span class="eyebrow">当前翅型的阶段证据</span>
+              <h3 id="evidenceTitle">等待预测</h3>
+            </div>
+            <div class="evidence-grid">
+              <div><span>主要模型</span><strong id="modelEvidence">-</strong></div>
+              <div><span>序数模型</span><strong id="ordinalEvidence">-</strong></div>
+              <div><span>阶段模板</span><strong id="templateEvidence">-</strong></div>
+              <div><span>训练参考库</span><strong id="referenceEvidence">-</strong></div>
+            </div>
+          </section>
+
+          <details class="json-box">
+            <summary>JSON技术结果（字段名保留英文）</summary>
+            <pre id="jsonResult">{}</pre>
+          </details>
+        </section>
+      </section>
+
+      <section class="history-panel">
+        <div class="history-header">
+          <h2>最近预测记录</h2>
+          <button id="refreshHistory" class="ghost-button" type="button">刷新</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>文件</th>
+                <th>翅型</th>
+                <th>阶段</th>
+                <th>判定状态</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="./app.js?v=20260716-unified-portal-1"></script>
+  <script src="/zh/access-display.js"></script></body>
+</html>

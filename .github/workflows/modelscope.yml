@@ -1,0 +1,26 @@
+name: Update the existing free ModelScope backend
+on:
+  push:
+    branches: [main]
+    paths: ['code_python/**', 'output_results/**', 'deploy/**', 'Dockerfile', 'requirements.txt', '.github/workflows/modelscope.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atlas-modelscope
+  cancel-in-progress: false
+jobs:
+  update:
+    if: ${{ vars.MODELSCOPE_STUDIO != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install modelscope-hub==0.4.6
+      - name: Verify free hardware, synchronize code, request deployment
+        env:
+          MODELSCOPE_STUDIO: ${{ vars.MODELSCOPE_STUDIO }}
+          MODELSCOPE_API_KEY: ${{ secrets.MODELSCOPE_API_KEY }}
+        run: python deploy/sync_studio.py

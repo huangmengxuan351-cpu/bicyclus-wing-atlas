@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Expression Atlas Workbench</title><link rel="stylesheet" href="/zh/atlas/styles.css"></head>
+<body>
+  <nav class="topbar"><a class="brand" href="/zh/">翅盘 <i>图谱</i><small>表达图谱工作区 / V2</small></a><div><a class="current-page" href="/zh/atlas/">基因表达</a><a id="workspaceSwitch" href="/zh/anatomy/">解剖与多基因图层</a><a href="/zh/predict/">翅型预测</a><button id="copyLink">复制当前视图链接</button></div></nav>
+  <main class="shell">
+    <aside class="sidebar">
+      <span class="eyebrow">01 / 基因表达</span><h1>查看基因<br>表达分布</h1><p class="intro">单独查看一个基因的热图和强度点位，不叠加解剖背景。</p>
+      <label>基因<select id="gene" disabled></select></label>
+      <fieldset><legend>翅型</legend><div class="segments" id="wingButtons"><button data-wing="forewing">前翅</button><button data-wing="hindwing">后翅</button></div></fieldset>
+      <fieldset><legend>发育阶段</legend><div class="segments" id="stageButtons"><button data-stage="0.5">0.5</button><button data-stage="0.75">0.75</button><button data-stage="1.0">1.0</button></div></fieldset>
+      <label>处理分支<select id="variant"><option value="early_soft_q20">早期软门控q20</option><option value="baseline">基线处理</option><option value="bilateral_soft_q20">双边滤波与软门控q20</option></select></label>
+      <label>表达形式<select id="representation"><option value="heat">连续表达热图</option><option value="points">强度点位图</option></select></label>
+      <div class="view-settings"><label>表达透明度 <output id="opacityValue">100%</output><input id="opacity" type="range" min="0" max="1" step="0.05" value="1"></label><small>使用固定0–1热图范围与基线点位等级；显示调整不会改写数据。</small></div>
+      <div class="sidebar-note"><strong id="datasetCount">Loading archive...</strong><p>显示相对荧光强度，不表示绝对mRNA数量；点位不代表单个分子。</p></div>
+    </aside>
+    <section class="workspace">
+      <header class="workspace-heading"><div><span class="eyebrow">02 / 查看与比较</span><h2 id="viewTitle">正在加载图谱</h2><p id="viewSubtitle"></p></div><span id="statusBadge" class="badge">只读图谱归档</span></header>
+      <div class="mode-tabs" role="group" aria-label="比较布局"><button data-mode="single" class="active">单图查看</button><button data-mode="methods">处理分支比较</button><button data-mode="stages">跨阶段比较</button><button data-mode="wings">前后翅比较</button><button data-mode="sources">来源图预览</button></div>
+      <div class="toolbar"><div><button id="zoomOut" aria-label="缩小">-</button><output id="zoomValue">100%</output><button id="zoomIn" aria-label="放大">+</button><button id="fit">适应窗口</button><button id="fullscreen">全屏</button></div><span>拖动平移 · 滚轮缩放 · 视图同步</span></div>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <div id="tiles" class="tiles single" aria-live="polite"></div>
+      <div class="legend" id="legend"><span>相对表达</span><i></i><span>0</span><span>1</span><small>显示范围固定为0–1；不同样本或基因之间未进行绝对强度校准。</small></div>
+      <footer class="workspace-foot"><span id="modeNote">科研图层使用2048×2048参考网格，展示图为降采样预览。</span><a id="fullComparison" href="#" target="_blank" rel="noopener">查看六面板比较</a></footer>
+    </section>
+    <aside class="evidence">
+      <span class="eyebrow">03 / 数据依据</span><h2>当前视图信息</h2><dl id="facts"></dl>
+      <div class="review-note"><strong>配准审核状态</strong><p id="reviewStatus">加载中…</p><small>文件完整性检查不等同于生物学配准准确度评价。</small></div>
+      <details open><summary>处理方法说明</summary><p id="methodHelp"></p></details>
+      <details><summary>信号与覆盖诊断</summary><dl id="metrics"></dl><small>保留率和覆盖率不等同于精确率或召回率。</small></details>
+      <details open><summary>下载当前组合</summary><div id="downloads" class="download-list"></div></details>
+      <div class="report-links"><a href="/atlas-assets/main/index.html" target="_blank" rel="noopener">完整归档图库</a><a id="reportLink" target="_blank" rel="noopener">完整图谱报告</a><a id="experimentLink" target="_blank" rel="noopener">历史分析记录</a><a id="manifestLink">全部样本元数据（CSV）</a></div>
+    </aside>
+  </main>
+  <script src="/zh/atlas/workspaces.js"></script>
+</body></html>

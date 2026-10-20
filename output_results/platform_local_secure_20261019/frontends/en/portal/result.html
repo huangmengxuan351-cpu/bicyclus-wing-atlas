@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prediction & Atlas Result</title>
+    <link rel="stylesheet" href="/en/portal/styles.css?v=20260716-1" />
+  </head>
+  <body class="result-page">
+    <main class="result-shell">
+      <nav class="top-nav" aria-label="Portal navigation">
+        <a class="portal-mark" href="/en/">DAPI Wing Portal</a>
+        <div>
+          <a href="/en/predict/">New prediction</a>
+          <a id="fullAtlasLink" href="/en/atlas/">Open full atlas</a>
+        </div>
+      </nav>
+
+      <section id="loadingState" class="state-card">
+        <span class="loader" aria-hidden="true"></span>
+        <div><strong>Loading prediction workspace</strong><p>Restoring the model result and matching atlas layers.</p></div>
+      </section>
+
+      <section id="errorState" class="state-card error-card" hidden>
+        <div><strong>Could not load this result</strong><p id="errorMessage"></p></div>
+        <a class="button secondary" href="/en/predict/">Return to predictor</a>
+      </section>
+
+      <div id="resultContent" hidden>
+        <header class="result-header">
+          <div>
+            <span class="eyebrow">Prediction-linked atlas</span>
+            <h1 id="resultTitle">Wing and stage result</h1>
+            <p id="resultSubtitle"></p>
+          </div>
+          <div class="header-actions">
+            <span id="decisionPill" class="decision-pill">loading</span>
+            <a id="backToAlignment" class="button secondary" href="/en/predict/">Back to alignment</a>
+          </div>
+        </header>
+
+        <section class="probability-strip">
+          <article>
+            <span>Wing probability</span>
+            <div id="familyBars" class="probability-bars"></div>
+          </article>
+          <article>
+            <span id="stageProbabilityTitle">Stage probability</span>
+            <div id="stageBars" class="probability-bars"></div>
+          </article>
+          <article class="result-facts">
+            <div><span>Model prediction</span><strong id="modelPrediction">-</strong></div>
+            <div><span>Displayed atlas</span><strong id="displayedAtlas">-</strong></div>
+            <div><span>Alignment</span><strong id="alignmentStatus">-</strong></div>
+          </article>
+        </section>
+
+        <section id="reviewChooser" class="review-chooser" hidden>
+          <div>
+            <span class="eyebrow">User confirmation required</span>
+            <h2>Select the atlas combination to display</h2>
+            <p>The model result is preserved. Your selection changes only this atlas view and is not saved as a training label.</p>
+          </div>
+          <div id="jointCandidates" class="candidate-grid"></div>
+          <p id="reviewReason" class="review-reason"></p>
+        </section>
+
+        <section class="workspace-grid">
+          <article class="workspace-card media-card">
+            <header><span>01</span><div><h2>Uploaded DAPI</h2><p>Original grayscale input</p></div></header>
+            <div class="media-stage"><img id="uploadedImage" alt="Uploaded DAPI image" /></div>
+          </article>
+
+          <article class="workspace-card media-card">
+            <header>
+              <span>02</span><div><h2>Mask &amp; Alignment</h2><p id="alignmentAssetLabel">Selected aligned evidence</p></div>
+              <div class="segmented-control" role="group" aria-label="Alignment preview layer">
+                <button type="button" data-alignment-view="overlay" class="active">Overlay</button>
+                <button type="button" data-alignment-view="image">Image</button>
+                <button type="button" data-alignment-view="mask">Mask</button>
+              </div>
+            </header>
+            <div class="media-stage alignment-media">
+              <img id="alignedImage" alt="Aligned DAPI image" />
+              <img id="alignedMask" class="aligned-mask-layer" alt="Aligned wing mask" />
+            </div>
+          </article>
+
+          <article class="workspace-card media-card">
+            <header><span>03</span><div><h2>Standard DAPI Atlas</h2><p id="standardAtlasLabel">Waiting for atlas selection</p></div></header>
+            <div class="media-stage"><img id="standardAtlasImage" alt="Standard DAPI atlas" /></div>
+          </article>
+
+          <article class="workspace-card atlas-card-panel">
+            <header>
+              <span>04</span><div><h2>Gene &amp; Vein Atlas</h2><p>Interactive registered layers</p></div>
+              <a id="expandAtlasLink" class="text-link" href="/en/atlas/">Expand</a>
+            </header>
+            <div id="atlasPlaceholder" class="atlas-placeholder">
+              <strong>Select a wing and stage above</strong>
+              <p>The interactive gene atlas will load after confirmation.</p>
+            </div>
+            <iframe id="atlasFrame" title="Interactive gene and vein atlas" loading="lazy" hidden></iframe>
+          </article>
+        </section>
+
+        <details class="technical-details">
+          <summary>Model evidence and review details</summary>
+          <div class="technical-grid">
+            <div><span>Wing margin</span><strong id="wingMargin">-</strong></div>
+            <div><span>Stage margin</span><strong id="stageMargin">-</strong></div>
+            <div><span>Alignment confidence</span><strong id="alignmentConfidence">-</strong></div>
+            <div><span>Review reason</span><strong id="technicalReviewReason">-</strong></div>
+          </div>
+        </details>
+      </div>
+    </main>
+    <script src="/en/portal/result.js?v=20260716-1"></script>
+  </body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Expression Atlas Workbench</title><link rel="stylesheet" href="/atlas/styles.css"></head>
+<body>
+  <nav class="topbar"><a class="brand" href="/">Wing <i>Atlas</i><small>EXPRESSION WORKBENCH / V2</small></a><div><a class="current-page" href="/atlas/">Gene expression</a><a id="workspaceSwitch" href="/anatomy/">Anatomy &amp; layers</a><a href="/predict/">Predict a wing</a><button id="copyLink">Copy view link</button></div></nav>
+  <main class="shell">
+    <aside class="sidebar">
+      <span class="eyebrow">01 / Gene expression</span><h1>Read the<br>expression.</h1><p class="intro">One gene at a time. Heatmaps and intensity particles, without anatomical background.</p>
+      <label>Gene<select id="gene" disabled></select></label>
+      <fieldset><legend>Wing family</legend><div class="segments" id="wingButtons"><button data-wing="forewing">Forewing</button><button data-wing="hindwing">Hindwing</button></div></fieldset>
+      <fieldset><legend>Developmental stage</legend><div class="segments" id="stageButtons"><button data-stage="0.5">0.5</button><button data-stage="0.75">0.75</button><button data-stage="1.0">1.0</button></div></fieldset>
+      <label>Processing<select id="variant"><option value="early_soft_q20">Early soft-q20</option><option value="baseline">Baseline</option><option value="bilateral_soft_q20">Bilateral + soft-q20</option></select></label>
+      <label>Representation<select id="representation"><option value="heat">Expression heatmap</option><option value="points">Intensity particles</option></select></label>
+      <div class="view-settings"><label>Expression opacity <output id="opacityValue">100%</output><input id="opacity" type="range" min="0" max="1" step="0.05" value="1"></label><small>Fixed 0-1 heat scale and baseline particle tiers. Display adjustments do not alter data.</small></div>
+      <div class="sidebar-note"><strong id="datasetCount">Loading archive...</strong><p>Relative fluorescence, not absolute mRNA counts. Point samples are not molecules.</p></div>
+    </aside>
+    <section class="workspace">
+      <header class="workspace-heading"><div><span class="eyebrow">02 / Inspect &amp; compare</span><h2 id="viewTitle">Loading the atlas</h2><p id="viewSubtitle"></p></div><span id="statusBadge" class="badge">Read-only archive</span></header>
+      <div class="mode-tabs" role="group" aria-label="Comparison layout"><button data-mode="single" class="active">Single view</button><button data-mode="methods">Compare processing</button><button data-mode="stages">Across stages</button><button data-mode="wings">Fore / Hind</button><button data-mode="sources">Source images</button></div>
+      <div class="toolbar"><div><button id="zoomOut" aria-label="Zoom out">-</button><output id="zoomValue">100%</output><button id="zoomIn" aria-label="Zoom in">+</button><button id="fit">Fit</button><button id="fullscreen">Fullscreen</button></div><span>Drag to pan &middot; Scroll to zoom &middot; Linked viewports</span></div>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <div id="tiles" class="tiles single" aria-live="polite"></div>
+      <div class="legend" id="legend"><span>Relative expression</span><i></i><span>0</span><span>1</span><small>Fixed 0-1 display scale. Intensities are not calibrated across samples or genes.</small></div>
+      <footer class="workspace-foot"><span id="modeNote">All layers are 2048 x 2048.</span><a id="fullComparison" href="#" target="_blank" rel="noopener">Open six-panel comparison</a></footer>
+    </section>
+    <aside class="evidence">
+      <span class="eyebrow">03 / Evidence</span><h2>Behind the view</h2><dl id="facts"></dl>
+      <div class="review-note"><strong>Registration review status</strong><p id="reviewStatus">Loading...</p><small>Integrity validation does not establish biological registration accuracy.</small></div>
+      <details open><summary>Processing explained</summary><p id="methodHelp"></p></details>
+      <details><summary>Signal &amp; coverage diagnostics</summary><dl id="metrics"></dl><small>Retention and coverage are not precision or recall.</small></details>
+      <details open><summary>Download this group</summary><div id="downloads" class="download-list"></div></details>
+      <div class="report-links"><a href="/atlas-assets/main/index.html" target="_blank" rel="noopener">Combined archive gallery</a><a id="reportLink" target="_blank" rel="noopener">Full atlas report</a><a id="experimentLink" target="_blank" rel="noopener">Historical experiments</a><a id="manifestLink">All sample metadata (CSV)</a></div>
+    </aside>
+  </main>
+  <script src="/atlas/workspaces.js"></script>
+</body></html>

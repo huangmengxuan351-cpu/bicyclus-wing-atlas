@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DAPI Wing Stage Predictor</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <nav class="portal-nav" aria-label="Portal navigation">
+        <a href="/en/">DAPI Wing Portal</a>
+        <a href="/en/atlas/">Explore Standard Atlas</a>
+      </nav>
+      <section class="workbench">
+        <aside class="control-panel">
+          <div class="brand">
+            <div>
+              <h1>DAPI Wing Stage Predictor</h1>
+              <p>Fore/Hind type + family stage probability</p>
+            </div>
+            <span class="status-pill" id="modelStatus">loading</span>
+          </div>
+
+          <form id="predictForm" class="upload-form">
+            <label class="drop-zone" for="imageInput">
+              <input id="imageInput" name="image" type="file" accept="image/*,.tif,.tiff" required />
+              <span class="drop-title">Select a DAPI image</span>
+              <span class="drop-subtitle" id="imageName">PNG / JPG / TIFF</span>
+            </label>
+
+            <div class="mask-row">
+              <span>Optional mask</span>
+              <label class="file-picker" for="maskInput">
+                <input id="maskInput" name="mask" type="file" accept="image/*,.tif,.tiff" />
+                <span class="file-picker-button">Choose file</span>
+                <span class="file-picker-name" id="maskName">No file selected</span>
+              </label>
+            </div>
+
+            <button class="primary-button" type="submit">
+              <span>Run Prediction</span>
+            </button>
+          </form>
+
+          <div class="model-card" id="modelInfo"></div>
+        </aside>
+
+        <section class="result-panel">
+          <div class="summary-strip">
+            <div>
+              <span class="eyebrow">Most likely</span>
+              <h2 id="summaryTitle">Awaiting upload</h2>
+            </div>
+            <div class="decision" id="decisionBadge">idle</div>
+          </div>
+
+          <div class="grid-two">
+            <div class="metric-block">
+              <h3>Wing Type</h3>
+              <div id="familyBars" class="bars"></div>
+            </div>
+            <div class="metric-block">
+              <h3 id="selectedStageTitle">Stage for Selected Wing</h3>
+              <div id="selectedStageBars" class="bars"></div>
+            </div>
+          </div>
+
+          <section class="alignment-card" id="alignmentCard">
+            <div class="alignment-head">
+              <div>
+                <span class="eyebrow">Automatic alignment</span>
+                <h3 id="alignmentTitle">Awaiting alignment</h3>
+              </div>
+              <div class="alignment-actions">
+                <span class="alignment-pill" id="alignmentBadge">idle</span>
+                <button id="toggleManual" class="ghost-button" type="button">Manual alignment</button>
+              </div>
+            </div>
+            <div class="confidence-line">
+              <div class="track"><div class="fill" id="alignmentFill" style="width:0%"></div></div>
+              <strong id="alignmentConfidence">0.0%</strong>
+            </div>
+            <p id="alignmentNote" class="alignment-note">The system automatically normalizes orientation, mirroring, scale, and position.</p>
+
+            <div id="manualPanel" class="manual-panel" hidden>
+              <div class="manual-guide">
+                <div class="manual-preview-shell">
+                  <img id="manualGrayPreview" alt="manual alignment preview" />
+                  <img id="manualMaskPreview" class="mask-overlay" alt="manual mask overlay" />
+                  <img id="referenceContourPreview" class="reference-contour" alt="family-neutral anatomical rotation guide" />
+                  <div class="alignment-legend">
+                    <span><i class="legend-line yellow"></i>Fixed: anatomical orientation guide</span>
+                    <span><i class="legend-line cyan"></i>Movable: current wing mask</span>
+                  </div>
+                </div>
+                <p class="guide-note">Orient the distal protrusion left, wing base right, upper wing margin up, and lower wing margin down. The yellow guide is independent of wing-family and stage predictions.</p>
+              </div>
+              <div class="manual-controls">
+                <label>Wing family
+                  <select id="manualFamily">
+                    <option value="forewing">forewing</option>
+                    <option value="hindwing">hindwing</option>
+                  </select>
+                </label>
+                <label>Rotation <output id="rotationValue">0°</output>
+                  <input id="rotationControl" type="range" min="-180" max="180" step="1" value="0" />
+                </label>
+                <label>Scale <output id="scaleValue">1.00×</output>
+                  <input id="scaleControl" type="range" min="0.50" max="1.50" step="0.01" value="1" />
+                </label>
+                <label>Horizontal position <output id="translateXValue">0 px</output>
+                  <input id="translateXControl" type="range" min="-512" max="512" step="8" value="0" />
+                </label>
+                <label>Vertical position <output id="translateYValue">0 px</output>
+                  <input id="translateYControl" type="range" min="-512" max="512" step="8" value="0" />
+                </label>
+                <label class="check-control"><input id="flipControl" type="checkbox" /> Horizontal flip</label>
+                <div class="manual-buttons">
+                  <button id="resetManual" class="ghost-button" type="button">Reset</button>
+                  <button id="applyManual" class="primary-button" type="button">Apply and re-predict</button>
+                </div>
+                <p id="manualActionStatus" class="manual-action-status" aria-live="polite"></p>
+              </div>
+            </div>
+          </section>
+
+          <section id="atlasDecisionPanel" class="atlas-decision-panel" hidden>
+            <div>
+              <span class="eyebrow">Atlas destination</span>
+              <h3 id="atlasDecisionTitle">Review required before opening the atlas</h3>
+              <p id="atlasDecisionNote">Select one of the six model-ranked wing and stage combinations.</p>
+            </div>
+            <div id="atlasCandidateGrid" class="atlas-candidate-grid"></div>
+          </section>
+
+          <div class="image-grid">
+            <figure>
+              <figcaption>Gray</figcaption>
+              <img id="grayPreview" alt="gray preview" />
+            </figure>
+            <figure>
+              <figcaption>Mask</figcaption>
+              <img id="maskPreview" alt="mask preview" />
+            </figure>
+            <figure>
+              <figcaption>Aligned Image</figcaption>
+              <img id="alignedGrayPreview" alt="aligned gray preview" />
+            </figure>
+            <figure>
+              <figcaption>Aligned Mask</figcaption>
+              <img id="alignedMaskPreview" alt="aligned mask preview" />
+            </figure>
+          </div>
+
+          <section class="evidence-card">
+            <div>
+              <span class="eyebrow">Selected family stage evidence</span>
+              <h3 id="evidenceTitle">Awaiting prediction</h3>
+            </div>
+            <div class="evidence-grid">
+              <div><span>Primary model</span><strong id="modelEvidence">-</strong></div>
+              <div><span>Ordinal</span><strong id="ordinalEvidence">-</strong></div>
+              <div><span>Template</span><strong id="templateEvidence">-</strong></div>
+              <div><span>Reference</span><strong id="referenceEvidence">-</strong></div>
+            </div>
+          </section>
+
+          <details class="json-box">
+            <summary>JSON result</summary>
+            <pre id="jsonResult">{}</pre>
+          </details>
+        </section>
+      </section>
+
+      <section class="history-panel">
+        <div class="history-header">
+          <h2>Recent Predictions</h2>
+          <button id="refreshHistory" class="ghost-button" type="button">Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>File</th>
+                <th>Type</th>
+                <th>Stage</th>
+                <th>Decision</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="./app.js?v=20260716-unified-portal-1"></script>
+  <script src="/en/access-display.js"></script></body>
+</html>

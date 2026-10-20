@@ -1,0 +1,13 @@
+services:
+  atlas:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7860:7860"
+    environment:
+      ATLAS_DATA_DIR: /atlas-data
+      ATLAS_STATE: /atlas-state
+      ATLAS_DOWNLOAD_PASSWORD: ${ATLAS_DOWNLOAD_PASSWORD:-}
+    volumes:
+      - ${ATLAS_DATA_PATH:?Set a private data directory}:/atlas-data:ro
+      - ${ATLAS_STATE_PATH:?Set a runtime state directory}:/atlas-state

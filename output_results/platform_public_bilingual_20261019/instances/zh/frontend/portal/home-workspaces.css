@@ -1,0 +1,4 @@
+.home-page .entry-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.home-page .entry-card{padding:25px;gap:24px;min-height:345px}.home-page .entry-card h2{font-size:clamp(27px,3vw,39px)}.home-page .anatomy-card{background:linear-gradient(145deg,#faf6e9,#e8d8b9)}
+@media(max-width:1000px){.home-page .entry-grid{grid-template-columns:1fr}.home-page .entry-card{min-height:250px}}
+
+html[lang="zh-CN"] body,html[lang="zh-CN"] h1,html[lang="zh-CN"] h2,html[lang="zh-CN"] h3{font-family:"Microsoft YaHei","Noto Sans CJK SC",Arial,sans-serif}.home-hero h1{font-size:clamp(40px,4.25vw,68px);max-width:1050px;line-height:1.25;letter-spacing:normal}
