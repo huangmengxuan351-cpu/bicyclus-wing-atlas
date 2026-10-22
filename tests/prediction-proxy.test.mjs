@@ -42,6 +42,29 @@ for (const language of ['zh','en']) {
     assert.equal(called,false);
   });
 
+  test(`${language}: give the hosting proxy a fixed-length upload stream`,async t => {
+    const tasks=[];
+    const sent=Uint8Array.from([0,255,216,10,13,128,0,255,217]);
+    const previous=Object.getOwnPropertyDescriptor(globalThis,'FixedLengthStream');
+    Object.defineProperty(globalThis,'FixedLengthStream',{configurable:true,value:class {
+      constructor(length) {
+        assert.equal(length,sent.length);
+        const stream=new TransformStream();
+        this.readable=stream.readable;this.writable=stream.writable;
+      }
+    }});
+    t.after(()=>{if(previous)Object.defineProperty(globalThis,'FixedLengthStream',previous);else delete globalThis.FixedLengthStream;});
+    t.mock.method(globalThis,'fetch',async (_,options) => {
+      assert.deepEqual(new Uint8Array(await new Response(options.body).arrayBuffer()),sent);
+      return Response.json({run_id:'binary-upload'});
+    });
+    const result=await worker.fetch(new Request(site+'/api/predict',{method:'POST',body:sent,
+      headers:{Origin:site,'Content-Length':String(sent.length)}}),env,{waitUntil:p=>tasks.push(p)});
+    await Promise.all(tasks);
+    assert.equal(result.status,200);
+    assert.equal(result.headers.get('X-Atlas-Upload-Framing'),'fixed-length');
+  });
+
   test(`${language}: private origin credential is required`,async t => {
     t.mock.method(globalThis,'fetch',async () => {throw Error('Must not call upstream');});
     const result=await worker.fetch(new Request(site+'/api/predict',{method:'POST',body:'test',headers:{Origin:site}}),{ATLAS_ORIGIN:origin});

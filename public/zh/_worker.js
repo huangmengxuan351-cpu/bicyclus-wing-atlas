@@ -34,7 +34,7 @@ async function asset(request,env,path) {
   headers.set('X-Content-Type-Options','nosniff');
   return new Response(request.method==='HEAD'?null:response.body,{status:response.status,headers});
 }
-async function dynamic(request,env) {
+async function dynamic(request,env,ctx) {
   const incoming=new URL(request.url);
   const origin=env.ATLAS_ORIGIN||FALLBACK_ORIGIN;
   let upstream;
@@ -62,10 +62,20 @@ async function dynamic(request,env) {
   try {
     let response,attempts=0;
     const retryable=['GET','HEAD'].includes(request.method);
+    let body=retryable?undefined:request.body;
+    // A generic ReadableStream makes Workers use chunked encoding. The Python
+    // origin and its hosting proxy require the upload's declared byte length.
+    if(body && request.headers.has('Content-Length')) {
+      const length=Number(request.headers.get('Content-Length'));
+      if(!Number.isSafeInteger(length)||length<0)return reply({error:'Invalid upload length.'},400);
+      const fixed=new FixedLengthStream(length);
+      ctx.waitUntil(body.pipeTo(fixed.writable).catch(()=>{}));
+      body=fixed.readable;
+    }
     for(let attempt=0;attempt<2;attempt++) {
       attempts++;
       try {
-        response=await fetch(target,{method:request.method,headers,body:retryable?undefined:request.body,redirect:'manual'});
+        response=await fetch(target,{method:request.method,headers,body,redirect:'manual'});
         if(!retryable||attempt||![502,503,504,520,521,522,523,524,525,526].includes(response.status))break;
         await response.body?.cancel();
       } catch(error) {if(!retryable||attempt)throw error;}
@@ -73,6 +83,7 @@ async function dynamic(request,env) {
     }
     const resultHeaders=new Headers(response.headers);resultHeaders.set('Cache-Control','no-store');resultHeaders.set('X-Atlas-Language',LANGUAGE);
     resultHeaders.set('X-Atlas-Origin-Attempts',String(attempts));
+    if(request.method==='POST')resultHeaders.set('X-Atlas-Upload-Framing',request.headers.has('Content-Length')?'fixed-length':'stream');
     const location=resultHeaders.get('Location');
     if(location?.startsWith(upstream.origin+prefix+'/'))resultHeaders.set('Location',incoming.origin+location.slice((upstream.origin+prefix).length));
     return new Response(response.body,{status:response.status,headers:resultHeaders});
@@ -80,7 +91,7 @@ async function dynamic(request,env) {
 }
 
 export default {
-  async fetch(request,env) {
+  async fetch(request,env,ctx) {
     const url=new URL(request.url),path=url.pathname;
     let decoded=path;
     try {for(let i=0;i<3;i++)decoded=decodeURIComponent(decoded);}catch{return reply({error:'Invalid URL.'},400);}
@@ -90,7 +101,7 @@ export default {
     if(original) {
       if(!request.headers.has('Authorization'))return reply({error:'Original downloads require a separate password.'},401,{'WWW-Authenticate':'Basic realm="Atlas original downloads", charset="UTF-8"'});
       if(!['GET','HEAD'].includes(request.method))return reply({error:'Method not allowed.'},405);
-      return dynamic(request,env);
+      return dynamic(request,env,ctx);
     }
     if(path in API_FILES && ['GET','HEAD'].includes(request.method))return asset(request,env,API_FILES[path]);
     const preview=await previewEntry(path,request,env);
@@ -105,10 +116,10 @@ export default {
     }
     // These packs contain reduced display previews only. CI reuses them with SHA-256 checks.
     if(/^\/public-packs\/\d{4}\.bin$/.test(path)&&['GET','HEAD'].includes(request.method))return asset(request,env,path.replace('/public-packs/','/packs/'));
-    if(/^\/preview\/[a-f0-9]{40}\.png$/.test(path)&&['GET','HEAD'].includes(request.method))return dynamic(request,env);
+    if(/^\/preview\/[a-f0-9]{40}\.png$/.test(path)&&['GET','HEAD'].includes(request.method))return dynamic(request,env,ctx);
     if(STATIC_ROUTES[path] && ['GET','HEAD'].includes(request.method))return asset(request,env,STATIC_ROUTES[path]);
-    if(/^\/api\/(?:model-info|history|health|result\/[A-Za-z0-9_.-]+|file\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)$/.test(path)&&['GET','HEAD'].includes(request.method))return dynamic(request,env);
-    if(['/api/predict','/api/re-align'].includes(path)&&request.method==='POST')return dynamic(request,env);
+    if(/^\/api\/(?:model-info|history|health|result\/[A-Za-z0-9_.-]+|file\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)$/.test(path)&&['GET','HEAD'].includes(request.method))return dynamic(request,env,ctx);
+    if(['/api/predict','/api/re-align'].includes(path)&&request.method==='POST')return dynamic(request,env,ctx);
     if(path==='/favicon.ico')return new Response(null,{status:204});
     // Explicit static allowlist; no raw data, admin, uploads or alternate-language tree.
     return reply({error:'Page not found.'},404);
