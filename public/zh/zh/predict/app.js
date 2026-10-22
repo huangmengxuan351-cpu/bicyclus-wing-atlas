@@ -20,6 +20,7 @@ if (embeddedAtlasMode) {
 const modelStatus = document.getElementById("modelStatus");
 const modelInfo = document.getElementById("modelInfo");
 const summaryTitle = document.getElementById("summaryTitle");
+const predictionError = document.getElementById("predictionError");
 const decisionBadge = document.getElementById("decisionBadge");
 const jsonResult = document.getElementById("jsonResult");
 const historyBody = document.getElementById("historyBody");
@@ -294,6 +295,7 @@ function renderEvidence(payload, selectedFamily) {
 }
 
 function renderResult(payload) {
+  predictionError.hidden = true;
   currentPayload = payload;
   const summary = payload.summary || {};
   const runId = payload.run_id;
@@ -411,6 +413,20 @@ manualFamily.addEventListener("change", () => {
 
 resetManual.addEventListener("click", resetManualControls);
 
+async function predictionResponse(response) {
+  let payload;
+  try { payload = await response.json(); } catch { payload = null; }
+  if (!response.ok || !payload) {
+    let message = payload?.error;
+    if (response.status === 409) message = "后台正在处理另一项预测，请稍候再运行。";
+    else if (response.status === 413) message = "图像与掩膜的上传总大小需在64 MB以内。";
+    else if (response.status === 403 && message === "Cross-origin writes are not allowed.") message = "请求来源校验未通过，请刷新本页面后重试。";
+    else if (response.status >= 500) message = "云端预测服务暂时连接失败，请稍候再试。本次请求未返回可用预测结果。";
+    throw new Error(`${message || "预测服务返回了无法读取的响应，请稍候重试。"} (HTTP ${response.status})`);
+  }
+  return payload;
+}
+
 applyManual.addEventListener("click", async () => {
   if (!currentPayload?.run_id) return;
   applyManual.disabled = true;
@@ -431,15 +447,14 @@ applyManual.addEventListener("click", async () => {
         flip_x: flipControl.checked,
       }),
     });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error || "人工校准失败");
+    const payload = await predictionResponse(response);
     renderResult(payload);
     updateManualTransform();
     manualPanel.hidden = false;
     toggleManual.textContent = "收起校准控件";
     manualActionStatus.textContent = "校准已应用，预测结果已更新。";
     manualActionStatus.className = "manual-action-status success";
-    await loadHistory();
+    await loadHistory().catch(() => {});
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     manualActionStatus.textContent = `校准未应用： ${message}`;
@@ -455,6 +470,8 @@ form.addEventListener("submit", async (event) => {
   const button = form.querySelector("button");
   button.disabled = true;
   button.textContent = "正在运行…";
+  predictionError.hidden = true;
+  summaryTitle.textContent = "正在配准并预测…";
   try {
     const data = new FormData();
     data.append("image", imageInput.files[0]);
@@ -462,14 +479,13 @@ form.addEventListener("submit", async (event) => {
       data.append("mask", maskInput.files[0]);
     }
     const response = await fetch("/api/predict", { method: "POST", body: data });
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload.error || "预测失败");
-    }
+    const payload = await predictionResponse(response);
     renderResult(payload);
-    await loadHistory();
+    await loadHistory().catch(() => {});
   } catch (error) {
     summaryTitle.textContent = "预测失败";
+    predictionError.textContent = error instanceof Error ? error.message : String(error);
+    predictionError.hidden = false;
     setDecision("error", String(error));
     jsonResult.textContent = String(error);
   } finally {

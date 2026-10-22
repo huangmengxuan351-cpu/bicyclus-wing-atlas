@@ -2,7 +2,7 @@ name: Deploy independent atlas display sites
 on:
   push:
     branches: [main]
-    paths: ['public/**', 'deploy/build_pages.py', 'package*.json', '.github/workflows/pages.yml']
+    paths: ['public/**', 'deploy/build_pages.py', 'tests/**', 'package*.json', '.github/workflows/pages.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -25,6 +25,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: npm ci
+      - name: Check prediction proxy and error handling
+        run: npm test
       - name: Build verified display package
         env:
           ATLAS_ORIGIN: ${{ vars.ATLAS_ORIGIN }}

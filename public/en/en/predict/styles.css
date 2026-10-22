@@ -727,6 +727,17 @@ th {
   }
 }
 
+.prediction-error {
+  margin: 0 0 18px;
+  padding: 14px 18px;
+  border: 1px solid #d9a28c;
+  border-radius: 10px;
+  background: #fff2e9;
+  color: #843b25;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
 body.embedded .app-shell {
   width: min(1480px, calc(100vw - 20px));
   padding: 10px 0 18px;

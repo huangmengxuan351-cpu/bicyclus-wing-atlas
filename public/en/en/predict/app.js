@@ -15,6 +15,7 @@ if (embeddedAtlasMode) {
 const modelStatus = document.getElementById("modelStatus");
 const modelInfo = document.getElementById("modelInfo");
 const summaryTitle = document.getElementById("summaryTitle");
+const predictionError = document.getElementById("predictionError");
 const decisionBadge = document.getElementById("decisionBadge");
 const jsonResult = document.getElementById("jsonResult");
 const historyBody = document.getElementById("historyBody");
@@ -289,6 +290,7 @@ function renderEvidence(payload, selectedFamily) {
 }
 
 function renderResult(payload) {
+  predictionError.hidden = true;
   currentPayload = payload;
   const summary = payload.summary || {};
   const runId = payload.run_id;
@@ -406,6 +408,20 @@ manualFamily.addEventListener("change", () => {
 
 resetManual.addEventListener("click", resetManualControls);
 
+async function predictionResponse(response) {
+  let payload;
+  try { payload = await response.json(); } catch { payload = null; }
+  if (!response.ok || !payload) {
+    let message = payload?.error;
+    if (response.status === 409) message = "Another prediction is running. Please wait before submitting again.";
+    else if (response.status === 413) message = "The image and mask must total no more than 64 MB.";
+    else if (response.status === 403 && message === "Cross-origin writes are not allowed.") message = "The request origin check failed. Refresh this page and try again.";
+    else if (response.status >= 500) message = "The cloud prediction service could not be reached. Please try again shortly. No usable prediction result was returned.";
+    throw new Error(`${message || "The prediction service returned an unreadable response. Please try again shortly."} (HTTP ${response.status})`);
+  }
+  return payload;
+}
+
 applyManual.addEventListener("click", async () => {
   if (!currentPayload?.run_id) return;
   applyManual.disabled = true;
@@ -426,15 +442,14 @@ applyManual.addEventListener("click", async () => {
         flip_x: flipControl.checked,
       }),
     });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error || "Manual alignment failed");
+    const payload = await predictionResponse(response);
     renderResult(payload);
     updateManualTransform();
     manualPanel.hidden = false;
     toggleManual.textContent = "Hide alignment controls";
     manualActionStatus.textContent = "Alignment applied. Predictions have been updated.";
     manualActionStatus.className = "manual-action-status success";
-    await loadHistory();
+    await loadHistory().catch(() => {});
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     manualActionStatus.textContent = `Alignment not applied: ${message}`;
@@ -450,6 +465,8 @@ form.addEventListener("submit", async (event) => {
   const button = form.querySelector("button");
   button.disabled = true;
   button.textContent = "Running...";
+  predictionError.hidden = true;
+  summaryTitle.textContent = "Aligning and predicting...";
   try {
     const data = new FormData();
     data.append("image", imageInput.files[0]);
@@ -457,14 +474,13 @@ form.addEventListener("submit", async (event) => {
       data.append("mask", maskInput.files[0]);
     }
     const response = await fetch("/api/predict", { method: "POST", body: data });
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload.error || "Prediction failed");
-    }
+    const payload = await predictionResponse(response);
     renderResult(payload);
-    await loadHistory();
+    await loadHistory().catch(() => {});
   } catch (error) {
     summaryTitle.textContent = "Prediction failed";
+    predictionError.textContent = error instanceof Error ? error.message : String(error);
+    predictionError.hidden = false;
     setDecision("error", String(error));
     jsonResult.textContent = String(error);
   } finally {

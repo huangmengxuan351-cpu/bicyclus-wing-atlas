@@ -53,7 +53,10 @@ async function dynamic(request,env) {
     if(!env.MODELSCOPE_STUDIO_TOKEN)return unavailable();
     headers.set('Authorization','Bearer '+env.MODELSCOPE_STUDIO_TOKEN);
   }
-  if(headers.has('Origin'))headers.set('Origin',upstream.origin);
+  // Browser writes were checked against this site's origin above. The remaining
+  // hop uses a private service credential; ModelScope rewrites Host internally,
+  // so a browser Origin must not be compared with that internal routing host.
+  headers.delete('Origin');
   const prefix=upstream.pathname.replace(/\/$/,'');
   const target=new URL(prefix+incoming.pathname+incoming.search,upstream.origin);
   try {
