@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Standard Anatomy &amp; Expression Layers</title><link rel="stylesheet" href="/en/atlas/styles.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Standard Anatomy &amp; Expression Layers</title><link rel="stylesheet" href="/en/atlas/styles.css?v=20261022-processing"></head>
 <body data-workspace="anatomy">
   <nav class="topbar"><a class="brand" href="/en/">Wing <i>Atlas</i><small>ANATOMY &amp; LAYER WORKSPACE / V2</small></a><div><a id="workspaceSwitch" href="/en/atlas/">Gene expression</a><a class="current-page" href="/en/anatomy/">Anatomy &amp; layers</a><a href="/en/predict/">Predict a wing</a><button id="copyLink">Copy view link</button></div></nav>
   <main class="shell">
@@ -21,7 +21,11 @@
       <details class="multi-settings" id="multiSettings" open><summary>Gene layers / optional</summary>
         <label class="check"><input id="showGenes" type="checkbox">Show selected gene layers</label>
         <label>Inspect a gene<select id="gene" disabled></select></label><button id="addGene" class="wide-button">Add this gene to overlay</button>
-        <label>Processing<select id="variant"><option value="early_soft_q20">Early soft-q20</option><option value="baseline">Baseline</option><option value="bilateral_soft_q20">Bilateral + soft-q20</option></select></label>
+        <div class="processing-summary"><span>Expression processing</span><strong id="processingLabel">Soft gating (default)</strong></div>
+      <details class="processing-settings" id="processingSettings"><summary>Advanced settings / processing comparison</summary>
+        <p>Use the default soft-gated view for browsing. Compare alternatives when reviewing weak expression or smoothing.</p><label>Processing method<select id="variant"><option value="early_soft_q20">Soft gating (default)</option><option value="baseline">Baseline (control)</option><option value="bilateral_soft_q20">Bilateral + soft-q20</option></select></label>
+        <a id="processingComparison" class="processing-link" href="/en/atlas/?mode=methods">Compare methods for this gene</a><small>All three result sets, including the baseline control, remain available for review and traceability.</small>
+      </details>
         <label>Representation<select id="representation"><option value="heat">Expression heatmap</option><option value="points">Intensity particles</option></select></label>
         <label>Gene opacity <output id="opacityValue">60%</output><input id="opacity" type="range" min="0" max="1" step="0.01" value="0.60"></label>
         <div id="geneLayers"></div>
@@ -47,5 +51,5 @@
       <details open><summary>Download anatomy</summary><div id="anatomyDownloads" class="download-list"></div></details>
       <div class="report-links"><a href="/anatomy-assets/display_comparison.html" target="_blank" rel="noopener">Six-wing display comparison</a><a href="/atlas-assets/main/index.html" target="_blank" rel="noopener">Combined archive gallery</a><a id="reportLink" target="_blank" rel="noopener">Selected gene report</a><a id="experimentLink" target="_blank" rel="noopener">Historical experiments</a><a id="manifestLink">Sample metadata (CSV)</a></div>
     </aside>
-  </main><script src="/en/atlas/workspaces.js"></script>
+  </main><script src="/en/atlas/workspaces.js?v=20261022-processing"></script>
 <script src="/en/access-display.js"></script></body></html>

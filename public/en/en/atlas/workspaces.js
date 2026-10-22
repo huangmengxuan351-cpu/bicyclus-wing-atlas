@@ -2,7 +2,7 @@
 const $ = id => document.getElementById(id);
 const anatomical = document.body.dataset.workspace === "anatomy";
 const query = new URLSearchParams(location.search);
-const names = {baseline:"Baseline",early_soft_q20:"Early soft-q20",bilateral_soft_q20:"Bilateral + soft-q20"};
+const names = {baseline:"Baseline (control)",early_soft_q20:"Soft gating (default)",bilateral_soft_q20:"Bilateral + soft-q20"};
 const tips = {
   baseline:"No additional soft-q20 or filtering. Historical gain or background handling may already be present; this is not untouched microscope data.",
   early_soft_q20:"Soft weights are estimated before replaying frozen registration. Low-SNR signal is attenuated; real weak expression can also be reduced.",
@@ -57,6 +57,7 @@ function syncUrl(){
   }
   history.replaceState(null,"",`${anatomical?"/en/anatomy/":"/en/atlas/"}?${p}`);
   const destination=new URLSearchParams({gene:state.gene,wing:state.wing,stage:state.stage,variant:state.variant,representation:state.representation});
+  if($("processingComparison"))$("processingComparison").href=`/en/atlas/?${destination}&mode=methods`;
   if(!anatomical){destination.set("genes",state.gene);destination.set("showGenes","1");}
   $("workspaceSwitch").href=`${anatomical?"/en/atlas/":"/en/anatomy/"}?${destination}`;
 }
@@ -172,6 +173,7 @@ function render(){
   if(!data)return;
   const token=++generation;tiles=[];$("tiles").replaceChildren();$("tiles").className=`tiles ${state.mode==="styles"?"methods":state.mode}`;
   $("gene").value=state.gene;$("variant").value=state.variant;$("representation").value=state.representation;$("variant").disabled=state.mode==="methods";
+  $("processingLabel").textContent=state.mode==="methods"?"Three-method comparison":names[state.variant];
   document.querySelectorAll("[data-wing],[data-stage],[data-mode]").forEach(b=>{const key=b.dataset.wing?"wing":b.dataset.stage?"stage":"mode";b.classList.toggle("active",b.dataset[key]===state[key]);});
   const group=findGroup();geneEvidence(group);syncUrl();
   $("viewTitle").textContent=`${anatomical?"Standard anatomy":state.gene} / ${labelWing(state.wing)}`;
@@ -221,6 +223,7 @@ async function init(){
   if(!["heat","points"].includes(state.representation))state.representation="heat";
   if(!(anatomical?["single","styles","stages","wings"]:["single","methods","stages","wings","sources"]).includes(state.mode))state.mode="single";
   selectedGenes=[...new Set(selectedGenes)].filter(g=>data.genes.includes(g)).slice(0,4);
+  if(state.variant!=="early_soft_q20"||state.mode==="methods")$("processingSettings").open=true;
   $("gene").innerHTML=data.genes.map(g=>`<option value="${esc(g)}">${esc(g)}${data.processed_genes.includes(g)?"":" / awaiting data"}</option>`).join("");$("gene").disabled=false;
   if(anatomical){
     applyPreset(query.get("displayPreset")||"structure");$("showGenes").checked=selectedGenes.length>0;

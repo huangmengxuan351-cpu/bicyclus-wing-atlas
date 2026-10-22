@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Standard Anatomy &amp; Expression Layers</title><link rel="stylesheet" href="/zh/atlas/styles.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Standard Anatomy &amp; Expression Layers</title><link rel="stylesheet" href="/zh/atlas/styles.css?v=20261022-processing"></head>
 <body data-workspace="anatomy">
   <nav class="topbar"><a class="brand" href="/zh/">翅盘 <i>图谱</i><small>解剖图层工作区 / V2</small></a><div><a id="workspaceSwitch" href="/zh/atlas/">基因表达</a><a class="current-page" href="/zh/anatomy/">解剖与多基因图层</a><a href="/zh/predict/">翅型预测</a><button id="copyLink">复制当前视图链接</button></div></nav>
   <main class="shell">
@@ -21,7 +21,11 @@
       <details class="multi-settings" id="multiSettings" open><summary>可选基因图层</summary>
         <label class="check"><input id="showGenes" type="checkbox">显示已选基因</label>
         <label>查看基因<select id="gene" disabled></select></label><button id="addGene" class="wide-button">将当前基因加入叠加</button>
-        <label>处理分支<select id="variant"><option value="early_soft_q20">早期软门控q20</option><option value="baseline">基线处理</option><option value="bilateral_soft_q20">双边滤波与软门控q20</option></select></label>
+        <div class="processing-summary"><span>表达处理</span><strong id="processingLabel">软门控处理（默认）</strong></div>
+      <details class="processing-settings" id="processingSettings"><summary>高级设置／处理方法比较</summary>
+        <p>日常浏览使用默认软门控结果；需要核对弱表达或平滑效果时，可切换对照版本。</p><label>选择处理方法<select id="variant"><option value="early_soft_q20">软门控处理（默认）</option><option value="baseline">基线处理（对照）</option><option value="bilateral_soft_q20">双边滤波与软门控q20</option></select></label>
+        <a id="processingComparison" class="processing-link" href="/zh/atlas/?mode=methods">比较当前基因的三种处理</a><small>后台保留全部三套结果及基线对照，支持追溯与复核。</small>
+      </details>
         <label>表达形式<select id="representation"><option value="heat">连续表达热图</option><option value="points">强度点位图</option></select></label>
         <label>基因总体透明度 <output id="opacityValue">60%</output><input id="opacity" type="range" min="0" max="1" step="0.01" value="0.60"></label>
         <div id="geneLayers"></div>
@@ -47,5 +51,5 @@
       <details open><summary>下载解剖结构</summary><div id="anatomyDownloads" class="download-list"></div></details>
       <div class="report-links"><a href="/anatomy-assets/display_comparison.html" target="_blank" rel="noopener">六组翅盘显示比较</a><a href="/atlas-assets/main/index.html" target="_blank" rel="noopener">完整归档图库</a><a id="reportLink" target="_blank" rel="noopener">当前基因报告</a><a id="experimentLink" target="_blank" rel="noopener">历史分析记录</a><a id="manifestLink">样本元数据（CSV）</a></div>
     </aside>
-  </main><script src="/zh/atlas/workspaces.js"></script>
+  </main><script src="/zh/atlas/workspaces.js?v=20261022-processing"></script>
 <script src="/zh/access-display.js"></script></body></html>

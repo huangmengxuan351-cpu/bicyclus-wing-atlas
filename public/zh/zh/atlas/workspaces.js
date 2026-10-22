@@ -7,7 +7,7 @@ function sourceStageCN(value){return value==="pre_historical_alignment_export"?"
 const $ = id => document.getElementById(id);
 const anatomical = document.body.dataset.workspace === "anatomy";
 const query = new URLSearchParams(location.search);
-const names = {baseline:"基线处理",early_soft_q20:"早期软门控q20",bilateral_soft_q20:"双边滤波与软门控q20"};
+const names = {baseline:"基线处理（对照）",early_soft_q20:"软门控处理（默认）",bilateral_soft_q20:"双边滤波与软门控q20"};
 const tips = {
   baseline:"不新增软门控或滤波；历史输入可能已经过增益或背景处理，并非未经处理的显微图像。",
   early_soft_q20:"在回放冻结配准之前估计软权重；低信噪比信号会被抑制，也可能降低真实弱表达。",
@@ -62,6 +62,7 @@ function syncUrl(){
   }
   history.replaceState(null,"",`${anatomical?"/zh/anatomy/":"/zh/atlas/"}?${p}`);
   const destination=new URLSearchParams({gene:state.gene,wing:state.wing,stage:state.stage,variant:state.variant,representation:state.representation});
+  if($("processingComparison"))$("processingComparison").href=`/zh/atlas/?${destination}&mode=methods`;
   if(!anatomical){destination.set("genes",state.gene);destination.set("showGenes","1");}
   $("workspaceSwitch").href=`${anatomical?"/zh/atlas/":"/zh/anatomy/"}?${destination}`;
 }
@@ -177,6 +178,7 @@ function render(){
   if(!data)return;
   const token=++generation;tiles=[];$("tiles").replaceChildren();$("tiles").className=`tiles ${state.mode==="styles"?"methods":state.mode}`;
   $("gene").value=state.gene;$("variant").value=state.variant;$("representation").value=state.representation;$("variant").disabled=state.mode==="methods";
+  $("processingLabel").textContent=state.mode==="methods"?"三种处理结果比较":names[state.variant];
   document.querySelectorAll("[data-wing],[data-stage],[data-mode]").forEach(b=>{const key=b.dataset.wing?"wing":b.dataset.stage?"stage":"mode";b.classList.toggle("active",b.dataset[key]===state[key]);});
   const group=findGroup();geneEvidence(group);syncUrl();
   $("viewTitle").textContent=`${anatomical?"标准解剖结构":state.gene} / ${labelWing(state.wing)}`;
@@ -226,6 +228,7 @@ async function init(){
   if(!["heat","points"].includes(state.representation))state.representation="heat";
   if(!(anatomical?["single","styles","stages","wings"]:["single","methods","stages","wings","sources"]).includes(state.mode))state.mode="single";
   selectedGenes=[...new Set(selectedGenes)].filter(g=>data.genes.includes(g)).slice(0,4);
+  if(state.variant!=="early_soft_q20"||state.mode==="methods")$("processingSettings").open=true;
   $("gene").innerHTML=data.genes.map(g=>`<option value="${esc(g)}">${esc(g)}${data.processed_genes.includes(g)?"":" / 等待数据"}</option>`).join("");$("gene").disabled=false;
   if(anatomical){
     applyPreset(query.get("displayPreset")||"structure");$("showGenes").checked=selectedGenes.length>0;
