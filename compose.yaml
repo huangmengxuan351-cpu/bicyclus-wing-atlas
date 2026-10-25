@@ -7,6 +7,7 @@ services:
     environment:
       ATLAS_DATA_DIR: /atlas-data
       ATLAS_STATE: /atlas-state
+      ATLAS_DATA_MANIFEST_SHA256: ${ATLAS_DATA_MANIFEST_SHA256:-}
       ATLAS_DOWNLOAD_PASSWORD: ${ATLAS_DOWNLOAD_PASSWORD:-}
     volumes:
       - ${ATLAS_DATA_PATH:?Set a private data directory}:/atlas-data:ro

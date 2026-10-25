@@ -17,6 +17,12 @@
     originalDownloads.textContent="Original images & data (password required)";
     originalDownloads.style.cssText='color:white;text-decoration:underline;display:inline-block;margin-left:12px;pointer-events:auto';
     note.append(originalDownloads);
+    const manualLink=document.createElement('a');
+    manualLink.href='/manual/';manualLink.target='_blank';manualLink.rel='noopener';
+    manualLink.textContent="User manual";
+    manualLink.style.cssText='color:white;text-decoration:underline;display:inline-block;margin-left:12px;pointer-events:auto';
+    note.append(manualLink);
+
     
   function apply(){
     document.querySelectorAll('a[download],.report-links,#fullComparison').forEach(el=>{el.hidden=true;el.style.display='none'});

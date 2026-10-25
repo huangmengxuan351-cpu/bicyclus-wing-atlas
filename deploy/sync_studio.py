@@ -36,9 +36,9 @@ def main():
     if not any(item['name'] == info.hardware and item['resource_type'] == 'free' and not item['name'].startswith('paid/') for item in choices):
         raise RuntimeError('The current account API did not confirm this Studio hardware is free. No code or resource changes were made.')
     # An allowlist prevents model/data/cache files from entering the Studio source.
-    allowed = {'Dockerfile', 'requirements.txt', '.dockerignore', 'README.md'}
+    allowed = {'Dockerfile', 'requirements.txt', '.dockerignore', 'README.md', 'LICENSE', 'NOTICE.md', 'DATA_USE.md'}
     paths = [p for p in ROOT.rglob('*') if p.is_file() and not p.is_symlink()
-             and ((p.relative_to(ROOT).parts[0] in ('code_python', 'output_results', 'deploy') and p.suffix in ('.py', '.html', '.css', '.js', '.json', '.png'))
+             and ((p.relative_to(ROOT).parts[0] in ('code_python', 'output_results', 'deploy', 'public', 'docs') and p.suffix in ('.py', '.html', '.css', '.js', '.json', '.png', '.md'))
                   or p.relative_to(ROOT).as_posix() in allowed)]
     if any(p.stat().st_size > 10 * 1024 * 1024 for p in paths):
         raise RuntimeError('Unexpected large file in the public code checkout.')

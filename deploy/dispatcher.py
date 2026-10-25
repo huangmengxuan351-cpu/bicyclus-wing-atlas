@@ -1,10 +1,11 @@
-"""Single-port hosting adapter; language sessions and original-file checks stay intact."""
+"""Single-port browser and API adapter using the canonical public frontend."""
 import json
 import os
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
+from http.cookies import SimpleCookie
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -29,19 +30,32 @@ class Handler(BaseHTTPRequestHandler):
             return self.json({'ready': True, 'service': 'cloud-prediction-origin',
                               'languages': ['zh', 'en'], 'downloads': 'password-required'})
         if path == '/' and self.command in ('GET', 'HEAD'):
-            return self.json({'service': 'Wing Atlas prediction origin',
-                              'interface': 'Use the independent Chinese or English Pages website.',
-                              'health': '/healthz'})
+            self.send_response(302)
+            self.send_header('Location', '/en/')
+            self.send_header('Content-Length', '0')
+            self.end_headers()
+            return
         language = next((key for key in ('zh', 'en') if path.startswith('/' + key + '/')), None)
         if language is None:
-            return self.json({'error': 'Unknown route.'}, 404)
+            # Browser APIs use root-relative URLs. Same-host Referer determines
+            # the edition; the cookie is a fallback for direct API clients.
+            referer = urlsplit(self.headers.get('Referer', ''))
+            language = next((key for key in ('zh', 'en')
+                             if referer.netloc == self.headers.get('Host')
+                             and referer.path.startswith('/' + key + '/')), None)
+            if language is None:
+                cookie = SimpleCookie()
+                try:
+                    cookie.load(self.headers.get('Cookie', ''))
+                except Exception:
+                    pass
+                stored = cookie.get('atlas_language')
+                language = stored.value if stored and stored.value in ('zh', 'en') else 'en'
         if self.command not in ('GET', 'HEAD', 'POST'):
             return self.json({'error': 'Method not allowed.'}, 405)
         if path.startswith('/' + language + '/_'):
             return self.json({'error': 'Unknown route.'}, 404)
-        relative = self.path[len('/' + language):]
-        if not relative.startswith(('/api/', '/preview/', '/downloads', '/atlas-assets/', '/anatomy-assets/')) and relative != '/healthz':
-            return self.json({'error': 'This origin serves APIs. Open the public Pages website.'}, 404)
+        relative = self.path[len('/' + language):] if path.startswith('/' + language + '/') else self.path
         port = 8890 if language == 'zh' else 8891
         origin = 'http://127.0.0.1:' + str(port)
         headers = {key: value for key, value in self.headers.items()
@@ -49,6 +63,11 @@ class Handler(BaseHTTPRequestHandler):
         # ModelScope reserves Authorization. Pages forwards the user's Basic header
         # as X-Atlas-Download-Authorization; the validated private gateway checks it.
         authorization = self.headers.get('X-Atlas-Download-Authorization', '')
+        direct_authorization = self.headers.get('Authorization', '')
+        if not authorization and direct_authorization.startswith('Basic '):
+            # Direct local Docker browsers send Basic authentication themselves;
+            # the ModelScope service's Bearer credential must never be forwarded.
+            authorization = direct_authorization
         if authorization:
             headers['Authorization'] = authorization
         request_origin = self.headers.get('Origin')
@@ -71,6 +90,8 @@ class Handler(BaseHTTPRequestHandler):
         with response:
             body = response.read()
             self.send_response(response.status)
+            if 'text/html' in response.headers.get('Content-Type', ''):
+                self.send_header('Set-Cookie', 'atlas_language=' + language + '; Path=/; SameSite=Lax')
             for key, value in response.headers.items():
                 if key.lower() not in ('transfer-encoding', 'connection', 'server', 'date', 'content-length'):
                     self.send_header(key, value)

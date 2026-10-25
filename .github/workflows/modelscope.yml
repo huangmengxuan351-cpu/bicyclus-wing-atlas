@@ -2,7 +2,7 @@ name: Update the existing free ModelScope backend
 on:
   push:
     branches: [main]
-    paths: ['code_python/**', 'output_results/**', 'deploy/**', 'Dockerfile', 'requirements.txt', '.github/workflows/modelscope.yml']
+    paths: ['public/**', 'docs/**', 'LICENSE', 'NOTICE.md', 'DATA_USE.md', 'code_python/**', 'output_results/**', 'deploy/**', 'Dockerfile', 'requirements.txt', '.github/workflows/modelscope.yml']
   workflow_dispatch:
 permissions:
   contents: read

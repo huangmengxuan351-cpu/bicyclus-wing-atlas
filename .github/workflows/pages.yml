@@ -27,6 +27,8 @@ jobs:
       - run: npm ci
       - name: Check prediction proxy and error handling
         run: npm test
+      - name: Check shared frontend and local browser routing
+        run: python -m unittest discover -s tests -p 'test_*.py'
       - name: Build verified display package
         env:
           ATLAS_ORIGIN: ${{ vars.ATLAS_ORIGIN }}
@@ -40,3 +42,21 @@ jobs:
       - name: Verify the published public display and download guard
         if: vars.PAGES_BOOTSTRAP_READY == 'true' && vars.CLOUDFLARE_ACCOUNT_ID != ''
         run: python deploy/verify_pages.py --language ${{ matrix.language }}
+
+  project-entry:
+    runs-on: ubuntu-latest
+    if: vars.PAGES_BOOTSTRAP_READY == 'true' && vars.CLOUDFLARE_ACCOUNT_ID != ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Publish stable project entry without changing edition URLs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --no-install wrangler pages deploy public/landing --project-name bicycluswingatlas --branch main
+      - name: Check the project entry
+        run: curl --fail --silent --show-error https://bicycluswingatlas.pages.dev/__deployment_health

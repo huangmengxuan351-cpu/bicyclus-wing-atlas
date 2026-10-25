@@ -1,6 +1,5 @@
 .git
 .github
-public
 .env*
 protected_data
 private_data*

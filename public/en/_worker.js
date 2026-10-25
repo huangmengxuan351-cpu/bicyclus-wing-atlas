@@ -8,6 +8,8 @@ async function previewEntry(path,request,env) {
   return (await previewIndexPromise)[path];
 }
 const STATIC_ROUTES = {"/en/access-display.js":"/en/access-display.js","/en/atlas/anatomy.html":"/en/atlas/anatomy.html","/en/atlas/index.html":"/en/atlas/index.html","/en/atlas/styles.css":"/en/atlas/styles.css","/en/atlas/workspaces.js":"/en/atlas/workspaces.js","/en/portal/home-workspaces.css":"/en/portal/home-workspaces.css","/en/portal/home.js":"/en/portal/home.js","/en/portal/index.html":"/en/portal/index.html","/en/portal/result.html":"/en/portal/result.html","/en/portal/result.js":"/en/portal/result.js","/en/portal/styles.css":"/en/portal/styles.css","/en/predict/app.js":"/en/predict/app.js","/en/predict/index.html":"/en/predict/index.html","/en/predict/styles.css":"/en/predict/styles.css","/":"/en/portal/index.html","/en/":"/en/portal/index.html","/en/atlas/":"/en/atlas/index.html","/en/anatomy/":"/en/atlas/anatomy.html","/en/predict/":"/en/predict/index.html","/en/result/":"/en/portal/result.html","/en/predict/manual_anatomical_rotation_cross_overlay.png":"/en/predict/manual_anatomical_rotation_cross_overlay.png"};
+STATIC_ROUTES['/manual/']='/docs/manual.html';
+STATIC_ROUTES['/docs/manual.html']='/docs/manual.html';
 const API_FILES = {'/api/atlas/catalog':'/data/catalog.json','/api/access-policy':'/data/access-policy.json'};
 
 function reply(value,status=200,extra={}) {

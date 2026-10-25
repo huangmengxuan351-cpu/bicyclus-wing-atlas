@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bicyclus Wing Atlas Manual</title>
+<meta name="description" content="How to use the Bicyclus Wing Atlas: predicting wing and stage from a DAPI image, browsing gene expression, building anatomy overlays and sharing views.">
+<style>
+/* Layout: sticky contents rail on the left, one reading column on the right; widgets break slightly wider than the text.
+   Palette follows the live atlas site (sage paper, deep green ink, teal accent) with a dark "microscope field" for image-like widgets. */
+:root{
+  --paper:#f1f5ef; --surface:#fbfcf9; --sunk:#e7eee8; --ink:#17241e; --muted:#5a6a61; --line:#d2ddd4;
+  --teal:#2b7870; --teal-soft:#d9ebe5; --on-teal:#ffffff;
+  --amber:#9a6716; --amber-soft:#f4e6cc; --ok:#2c7a4b; --ok-soft:#d8ede0; --bad:#a34848; --bad-soft:#f5dddd;
+  --scope:#0a110f; --scope-line:#1f2c28; --scope-ink:#cfe0d8; --guide:#ffe14a; --mask:#47d7e8;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0d1311; --surface:#141c19; --sunk:#1a2420; --ink:#e1eae4; --muted:#95a79d; --line:#29372f;
+  --teal:#62c2b7; --teal-soft:#173430; --on-teal:#0d1311;
+  --amber:#e3ad5f; --amber-soft:#3a2b16; --ok:#72d19a; --ok-soft:#16301f; --bad:#ef8f8f; --bad-soft:#3a1d1d;
+  --scope:#060b0a; --scope-line:#1b2724; --scope-ink:#cfe0d8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0d1311; --surface:#141c19; --sunk:#1a2420; --ink:#e1eae4; --muted:#95a79d; --line:#29372f;
+  --teal:#62c2b7; --teal-soft:#173430; --on-teal:#0d1311;
+  --amber:#e3ad5f; --amber-soft:#3a2b16; --ok:#72d19a; --ok-soft:#16301f; --bad:#ef8f8f; --bad-soft:#3a1d1d;
+  --scope:#060b0a; --scope-line:#1b2724; --scope-ink:#cfe0d8; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font:16px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--teal);text-underline-offset:3px}
+a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px;border-radius:4px}
+code,kbd{font-family:var(--mono);font-size:.86em;background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:.05em .35em;overflow-wrap:anywhere}
+h1,h2,h3{text-wrap:balance;margin:0}
+h2{font:500 clamp(28px,3.4vw,36px)/1.15 var(--serif);letter-spacing:-.015em}
+h3{font:600 18px/1.35 var(--sans);margin-top:6px}
+p{margin:0}
+.eyebrow{font:600 12px/1.3 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--teal)}
+.muted{color:var(--muted)}
+.small{font-size:14px;line-height:1.55}
+
+.wrap{max-width:1220px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{border-bottom:1px solid var(--line);background:var(--surface)}
+header.top .wrap{padding-block:clamp(28px,5vw,56px) clamp(24px,4vw,40px);display:grid;gap:18px}
+header.top h1{font:500 clamp(36px,5.6vw,60px)/1.02 var(--serif);letter-spacing:-.03em;max-width:16ch}
+header.top h1 i{font-weight:400}
+.lede{font-size:clamp(17px,1.9vw,19px);max-width:62ch;color:var(--muted)}
+.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:8px;font:500 15px/1 var(--sans);padding:11px 16px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;cursor:pointer}
+.btn:hover{background:var(--sunk)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:var(--on-teal)}
+.btn.primary:hover{filter:brightness(1.08)}
+.facts{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.facts b{color:var(--ink);font-weight:600}
+
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:48px;padding-block:36px 80px}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:14px}
+nav.toc ol{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:2px;counter-reset:t}
+nav.toc li{counter-increment:t}
+nav.toc a{display:block;padding:6px 10px;border-radius:6px;color:var(--muted);text-decoration:none;border-left:2px solid transparent}
+nav.toc a::before{content:counter(t,decimal-leading-zero) "  ";font:12px var(--mono);color:var(--line)}
+nav.toc a:hover{color:var(--ink);background:var(--sunk)}
+nav.toc a.on{color:var(--ink);border-left-color:var(--teal);background:var(--teal-soft)}
+nav.toc a.on::before{color:var(--teal)}
+details.toc-m{display:none}
+
+main{display:grid;gap:72px;min-width:0}
+section{display:grid;gap:18px;min-width:0;scroll-margin-top:24px}
+.prose{max-width:68ch;display:grid;gap:14px}
+.prose ul{margin:0;padding-left:1.2em}
+
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.card{display:grid;gap:8px;align-content:start;padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);text-decoration:none;min-width:0}
+a.card:hover{border-color:var(--teal)}
+.card .k{font:12px var(--mono);color:var(--muted)}
+.card h3{margin:0;font:500 22px/1.2 var(--serif)}
+.card p{font-size:14.5px;line-height:1.55;color:var(--muted)}
+.card .go{font-size:14px;color:var(--teal);font-weight:500}
+
+ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:0;max-width:72ch;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 14px;padding:16px 0;border-top:1px solid var(--line)}
+ol.steps li::before{content:counter(s);grid-row:span 2;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font:600 15px var(--sans);background:var(--teal-soft);color:var(--teal)}
+ol.steps b{font-weight:600}
+
+.widget{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden;min-width:0}
+.widget>.whead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--sunk)}
+.widget>.whead h3{margin:0;font:600 16px/1.3 var(--sans)}
+.widget>.whead span{font-size:13px;color:var(--muted)}
+.wbody{padding:18px;display:grid;gap:18px;min-width:0}
+.split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start}
+
+/* controls */
+.ctl{display:grid;gap:4px;font-size:14px}
+.ctl .row{display:flex;justify-content:space-between;gap:10px}
+.ctl output{font:500 13px var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--teal)}
+input[type=checkbox]{accent-color:var(--teal);width:16px;height:16px}
+select{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);width:100%}
+.check{display:flex;gap:9px;align-items:center;font-size:14px;cursor:pointer}
+.group{display:grid;gap:12px;padding:14px;border:1px solid var(--line);border-radius:10px}
+.group>.lbl{font:600 12px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.seg{justify-self:start;display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:500 14px var(--sans);padding:7px 12px;border:0;background:var(--surface);color:var(--muted);cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--teal);color:var(--on-teal)}
+.ctlgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+
+/* alignment practice */
+.scope{position:relative;background:var(--scope);border-radius:10px;overflow:hidden;aspect-ratio:1/1;max-width:100%}
+.scope canvas{width:100%;height:100%;display:block;touch-action:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:500 13px var(--sans);padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--sunk);color:var(--muted)}
+.chip.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.chip.no{background:var(--amber-soft);border-color:transparent;color:var(--amber)}
+.verdict{font:500 15px/1.45 var(--sans);padding:12px 14px;border-radius:9px;background:var(--sunk)}
+.verdict.ok{background:var(--ok-soft);color:var(--ok)}
+
+/* decision checker */
+.pill{display:inline-block;font:600 13px var(--mono);padding:5px 11px;border-radius:999px}
+.pill.auto{background:var(--ok-soft);color:var(--ok)}
+.pill.review{background:var(--amber-soft);color:var(--amber)}
+.meter{position:relative;height:10px;border-radius:5px;background:var(--sunk);border:1px solid var(--line);overflow:visible}
+.meter>b{position:absolute;inset:0 auto 0 0;border-radius:5px;background:var(--teal)}
+.meter>i{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--ink)}
+.reasons{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.reasons li{font:13.5px/1.45 var(--mono);padding:7px 10px;border-radius:7px;background:var(--amber-soft);color:var(--amber);overflow-wrap:anywhere}
+.reasons li.none{background:var(--ok-soft);color:var(--ok);font-family:var(--sans)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px;font-variant-numeric:tabular-nums}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-family:var(--mono);font-size:13.5px}
+
+/* page maps */
+.map{display:grid;gap:8px;padding:12px;border-radius:10px;background:var(--sunk);border:1px solid var(--line)}
+.map button{font:500 13px/1.25 var(--sans);text-align:left;padding:10px;border-radius:7px;border:1px dashed var(--muted);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px}
+.map button small{display:block;font:12px var(--mono);color:var(--muted);margin-bottom:3px}
+.map button[aria-pressed="true"]{border-style:solid;border-color:var(--teal);background:var(--teal-soft)}
+.map-pred{grid-template-columns:minmax(0,1fr) minmax(0,2.2fr);grid-template-areas:"up sum" "up bars" "mod align" "mod imgs" "hist hist"}
+.map-atlas{grid-template-columns:minmax(0,1fr) minmax(0,2.4fr) minmax(0,1fr);grid-template-areas:"top top top" "side tabs ev" "side view ev"}
+.mapnote{padding:14px 16px;border-left:3px solid var(--teal);background:var(--surface);border-radius:0 9px 9px 0;font-size:15px;display:grid;gap:6px}
+.mapnote strong{font-weight:600}
+
+/* tables */
+.tscroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--line)}
+thead th{font:600 12px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tbody tr:last-child td{border-bottom:0}
+td code{white-space:nowrap}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+
+/* coverage heatmap */
+.heat{border-collapse:separate;border-spacing:3px;width:auto;min-width:520px;font-variant-numeric:tabular-nums}
+.heat th,.heat td{border:0;padding:0;vertical-align:middle}
+.heat thead th{background:none;text-transform:none;letter-spacing:0;font:500 12.5px var(--sans);color:var(--muted);text-align:center;padding:2px 4px}
+.heat thead tr:first-child th{font:600 12px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+.heat tbody th{font:italic 500 14px var(--sans);padding-right:10px;text-align:right;color:var(--ink);white-space:nowrap}
+.heat tbody th small{font:normal 11px var(--mono);color:var(--muted);margin-left:6px}
+.heat button{width:56px;height:36px;border-radius:6px;border:2px solid transparent;font:600 14px var(--mono);cursor:pointer;position:relative}
+.heat button.single::after{content:"";position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--amber)}
+.heat button[aria-pressed="true"]{border-color:var(--ink)}
+.heat .gap{width:10px}
+.heat-legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;font-size:13px;color:var(--muted)}
+.ramp{display:inline-block;width:120px;height:10px;border-radius:5px;background:linear-gradient(90deg,color-mix(in srgb,var(--teal) 14%,var(--surface)),var(--teal));vertical-align:middle;margin:0 6px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-right:6px}
+
+.urlbox{display:grid;gap:10px}
+.url{font:13px/1.5 var(--mono);padding:12px;border-radius:8px;background:var(--scope);color:var(--scope-ink);overflow-wrap:anywhere;user-select:all}
+.selinfo{font-size:14px;color:var(--muted)}
+.selinfo b{color:var(--ink);font-weight:600}
+.genes{display:flex;flex-wrap:wrap;gap:8px}
+.gchip{display:inline-flex;align-items:center;gap:7px;font:italic 500 13.5px var(--sans);padding:5px 10px 5px 7px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.gchip i{width:12px;height:12px;border-radius:50%;display:inline-block;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+.gchip[aria-pressed="true"]{background:var(--teal-soft);border-color:var(--teal)}
+.gchip:disabled{opacity:.45;cursor:not-allowed}
+
+.palette{display:flex;flex-wrap:wrap;gap:10px 16px;padding:16px;border-radius:10px;background:var(--scope);font:italic 13.5px var(--sans);color:var(--scope-ink)}
+.palette span{display:inline-flex;align-items:center;gap:7px}
+.palette i{width:14px;height:14px;border-radius:50%}
+
+/* tabs for processing methods */
+.tabs{display:grid;gap:14px}
+.tabpanel{display:grid;gap:8px;padding:16px;border-radius:10px;background:var(--sunk);font-size:15px}
+.tabpanel .tag{font:12px var(--mono);color:var(--muted)}
+
+/* callouts */
+.note{display:grid;gap:6px;padding:14px 16px;border-radius:10px;background:var(--amber-soft);color:var(--ink);max-width:72ch;font-size:15px}
+.note strong{color:var(--amber)}
+
+details.faq{border-top:1px solid var(--line);padding:4px 0}
+details.faq:last-child{border-bottom:1px solid var(--line)}
+details.faq summary{cursor:pointer;padding:12px 0;font-weight:500;list-style:none;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary::after{content:"+";font:400 20px/1 var(--mono);color:var(--muted)}
+details.faq[open] summary::after{content:"−"}
+details.faq summary q{quotes:none;font:13.5px/1.5 var(--mono);color:var(--amber);display:block;margin-top:3px}
+details.faq>div{padding:0 0 16px;max-width:70ch;display:grid;gap:8px;color:var(--ink)}
+
+.arch{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px}
+.arch svg{display:block;min-width:760px;width:100%;height:auto}
+.arch .box{fill:var(--sunk);stroke:var(--line);stroke-width:1.5}
+.arch .box.pub{fill:var(--teal-soft);stroke:var(--teal)}
+.arch .box.priv{fill:var(--surface);stroke:var(--muted);stroke-dasharray:5 4}
+.arch .zone{fill:none;stroke:var(--muted);stroke-width:1;stroke-dasharray:3 4}
+.arch text{fill:var(--ink);font:500 13px var(--sans)}
+.arch text.sub{fill:var(--muted);font:12px var(--mono)}
+.arch text.zl{fill:var(--muted);font:600 11px var(--sans);letter-spacing:.1em}
+.arch .edge{stroke:var(--muted);stroke-width:1.5;fill:none}
+.arch .edge.dash{stroke-dasharray:4 4}
+.arch .ah{fill:var(--muted)}
+
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+footer .wrap{padding-block:24px 40px;display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
+
+@media (max-width:980px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:28px}
+  nav.toc{display:none}
+  details.toc-m{display:block;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:10px 14px}
+  details.toc-m summary{cursor:pointer;font-weight:500}
+  details.toc-m ol{margin:8px 0 0;padding-left:1.4em;display:grid;gap:4px;font-size:15px}
+  .split{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:720px){
+  .cards{grid-template-columns:minmax(0,1fr)}
+  .ctlgrid{grid-template-columns:minmax(0,1fr)}
+  .map-pred{grid-template-columns:minmax(0,1fr);grid-template-areas:"up" "mod" "sum" "bars" "align" "imgs" "hist"}
+  .map-atlas{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "side" "tabs" "view" "ev"}
+  ol.steps li{grid-template-columns:36px minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+html{scroll-behavior:smooth}
+</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">User manual · Bicyclus anynana wing atlas</span>
+    <h1>Reading the <i>Bicyclus</i> wing atlas</h1>
+    <p class="lede">How to identify the wing and stage in your own DAPI image, browse gene expression on standard wings, layer genes over veins, and share exactly what you are looking at.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://bicyclus-wing-atlas-en.pages.dev/" target="_blank" rel="noopener">Open the atlas (English)</a>
+      <a class="btn" href="https://bicyclus-wing-atlas-zh.pages.dev/" target="_blank" rel="noopener">Chinese edition</a>
+    </div>
+    <div class="facts" aria-label="Release contents">
+      <span><b>12</b> genes</span><span><b>291</b> source images</span><span><b>72</b> gene × wing × stage groups</span><span><b>3</b> processing methods</span><span><b>6</b> standard wings with confirmed veins</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Contents">
+    <span class="eyebrow">Contents</span>
+    <ol id="tocList">
+      <li><a href="#start">Start here</a></li>
+      <li><a href="#predict">Predict a wing</a></li>
+      <li><a href="#result">The result page</a></li>
+      <li><a href="#expression">Gene expression</a></li>
+      <li><a href="#anatomy">Anatomy &amp; layers</a></li>
+      <li><a href="#coverage">Data &amp; share links</a></li>
+      <li><a href="#reading">Reading responsibly</a></li>
+      <li><a href="#downloads">Original downloads</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+      <li><a href="#maintainers">How it is built</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <details class="toc-m">
+      <summary>Contents</summary>
+      <ol>
+        <li><a href="#start">Start here</a></li>
+        <li><a href="#predict">Predict a wing</a></li>
+        <li><a href="#result">The result page</a></li>
+        <li><a href="#expression">Gene expression</a></li>
+        <li><a href="#anatomy">Anatomy &amp; layers</a></li>
+        <li><a href="#coverage">Data &amp; share links</a></li>
+        <li><a href="#reading">Reading responsibly</a></li>
+        <li><a href="#downloads">Original downloads</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+        <li><a href="#maintainers">How it is built</a></li>
+      </ol>
+    </details>
+
+    <!-- 01 START -->
+    <section id="start">
+      <span class="eyebrow">Start here</span>
+      <h2>Three workspaces, one coordinate frame</h2>
+      <div class="prose">
+        <p>The atlas is built from fixed wings stained with DAPI, a fluorescent nuclear stain, imaged at three stages of wing development labeled 0.5, 0.75 and 1.0. Each accepted expression image has been registered onto one of six standard wings (forewing or hindwing at stage 0.5, 0.75 or 1.0), each drawn on a 2048 × 2048 pixel canvas. That shared frame is what lets you compare a gene across stages, put two genes side by side, or lay expression over the confirmed vein pattern. The site has three workspaces built on it, and each one links to the others.</p>
+        <p>You do not need an account. Browsing and prediction are open to anyone; only the original full-resolution files sit behind a download password.</p>
+      </div>
+      <div class="cards">
+        <a class="card" href="https://bicyclus-wing-atlas-en.pages.dev/en/predict/" target="_blank" rel="noopener">
+          <span class="k">/en/predict/</span>
+          <h3>Predict Wing &amp; Stage</h3>
+          <p>Upload a DAPI image of one wing. Get forewing or hindwing, the most likely stage, and a link to the matching atlas.</p>
+          <span class="go">Use when you have your own image →</span>
+        </a>
+        <a class="card" href="https://bicyclus-wing-atlas-en.pages.dev/en/atlas/" target="_blank" rel="noopener">
+          <span class="k">/en/atlas/</span>
+          <h3>Gene Expression</h3>
+          <p>One gene at a time as a heatmap or intensity particles, with no anatomical background. Compare stages, wings and processing.</p>
+          <span class="go">Use to read a pattern →</span>
+        </a>
+        <a class="card" href="https://bicyclus-wing-atlas-en.pages.dev/en/anatomy/" target="_blank" rel="noopener">
+          <span class="k">/en/anatomy/</span>
+          <h3>Anatomy &amp; Layers</h3>
+          <p>Standard DAPI and confirmed veins, with up to four genes added in their own colors.</p>
+          <span class="go">Use to place signal in context →</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- 02 PREDICT -->
+    <section id="predict">
+      <span class="eyebrow">Predict Wing &amp; Stage</span>
+      <h2>From your DAPI image to the matching atlas</h2>
+      <ol class="steps">
+        <li><b>Prepare one wing per image.</b><span class="muted">Use the DAPI channel of a fixed, DAPI-stained wing, matching how the atlas images were made. PNG, JPG or TIFF all work; color images are converted to grayscale. Image and mask together can be up to 64 MB. Automatic orientation, mirroring, scale and position normalization is attempted. Check the aligned preview and use manual calibration whenever the anatomical direction or outline is incorrect.</span></li>
+        <li><b>Add a mask only if you need to.</b><span class="muted">The service finds the wing outline automatically by thresholding, and it tries both bright-on-dark and dark-on-bright. If debris or a neighboring tissue confuses it, upload your own mask: white wing on a black background, the same pixel size as the image.</span></li>
+        <li><b>Press Run Prediction and check the alignment card.</b><span class="muted">It shows a confidence bar and the numbers behind it. Below 62% the card says “Low automatic-alignment confidence; manual alignment recommended” and opens the manual controls for you.</span></li>
+        <li><b>Read the two probability panels.</b><span class="muted">“Wing Type” gives forewing against hindwing. “Stage for …” gives the three stage probabilities for the selected wing. The evidence card lists the four stage signals that were fused: primary model, ordinal model, template match and nearest reference (with its distance <code>d</code>).</span></li>
+        <li><b>Let the atlas open, or choose it.</b><span class="muted">A confident result opens the matching atlas automatically. Otherwise all six wing and stage combinations appear, ranked by joint probability, and you pick one. Use the checker further down to see exactly when each happens.</span></li>
+      </ol>
+
+      <h3>What is on the predictor page</h3>
+      <p class="muted small">Select a region of this simplified page map to see what it does.</p>
+      <div class="split">
+        <div class="map map-pred" role="group" aria-label="Predictor page map" data-map="pred">
+          <button style="grid-area:up" data-k="up"><small>left panel</small>Upload form</button>
+          <button style="grid-area:mod" data-k="mod"><small>left panel</small>Model card</button>
+          <button style="grid-area:sum" data-k="sum"><small>top strip</small>Most likely · decision badge</button>
+          <button style="grid-area:bars" data-k="bars"><small>two panels</small>Wing Type · Stage bars</button>
+          <button style="grid-area:align" data-k="align"><small>card</small>Automatic alignment</button>
+          <button style="grid-area:imgs" data-k="imgs"><small>four images</small>Gray · Mask · Aligned image · Aligned mask</button>
+          <button style="grid-area:hist" data-k="hist"><small>bottom</small>Recent Predictions</button>
+        </div>
+        <div class="mapnote" id="note-pred" aria-live="polite"></div>
+      </div>
+
+      <div class="widget" id="alignWidget">
+        <div class="whead"><h3>Practice the manual alignment</h3><span>Educational practice · schematic outline, not real data</span></div>
+        <div class="wbody">
+          <div class="split">
+            <div style="display:grid;gap:10px;min-width:0">
+              <div class="scope"><canvas id="alignCanvas" width="960" height="960" aria-label="Alignment practice canvas: yellow fixed guide and cyan movable wing outline"></canvas></div>
+              <div class="legend"><span><i style="background:var(--guide)"></i>Fixed: anatomical orientation guide</span><span><i style="background:var(--mask)"></i>Movable: current wing mask</span></div>
+            </div>
+            <div style="display:grid;gap:14px;min-width:0">
+              <p class="small">The real page asks you to put the <b>distal protrusion on the left</b>, the <b>wing base on the right</b>, the <b>upper wing margin up</b> and the <b>lower wing margin down</b>. Try it on this scrambled outline. The two dots mark the distal tip and the base.</p>
+              <div class="ctl"><div class="row"><label for="aRot">Rotation</label><output id="aRotV">0°</output></div><input id="aRot" type="range" min="-180" max="180" step="1" value="0"></div>
+              <div class="ctl"><div class="row"><label for="aScale">Scale</label><output id="aScaleV">1.00×</output></div><input id="aScale" type="range" min="0.5" max="1.5" step="0.01" value="1"></div>
+              <div class="ctl"><div class="row"><label for="aX">Horizontal position</label><output id="aXV">0 px</output></div><input id="aX" type="range" min="-512" max="512" step="8" value="0"></div>
+              <div class="ctl"><div class="row"><label for="aY">Vertical position</label><output id="aYV">0 px</output></div><input id="aY" type="range" min="-512" max="512" step="8" value="0"></div>
+              <label class="check"><input id="aFlip" type="checkbox">Horizontal flip</label>
+              <div class="chips" id="aChips" aria-live="polite"></div>
+              <div class="verdict" id="aVerdict">Rotate, flip and slide the cyan outline until it sits on the yellow cross.</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn" id="aReset" type="button">Reset</button><button class="btn" id="aNew" type="button">New scrambled wing</button></div>
+            </div>
+          </div>
+          <p class="small muted">On the real page you also choose the <b>Wing family</b> before pressing <b>Apply and re-predict</b>. The stage model for that family then runs again on your adjusted image, and the alignment confidence is recalculated. The automatic result is kept on the server, and the history table lists your run again with “[manual]” after it.</p>
+        </div>
+      </div>
+
+      <div class="widget" id="decisionWidget">
+        <div class="whead"><h3>Will the atlas open automatically?</h3><span>Educational approximation of the public review gates; does not run the trained models</span></div>
+        <div class="wbody">
+          <div class="split">
+            <div style="display:grid;gap:14px;min-width:0">
+              <div class="group">
+                <span class="lbl">Wing type</span>
+                <div class="ctl"><div class="row"><label for="dWing">Top wing probability</label><output id="dWingV"></output></div><input id="dWing" type="range" min="0.5" max="1" step="0.01" value="0.91"></div>
+              </div>
+              <div class="group">
+                <span class="lbl">Stage for the selected wing</span>
+                <div class="ctl"><div class="row"><label for="dS1">Top stage probability</label><output id="dS1V"></output></div><input id="dS1" type="range" min="0.34" max="1" step="0.01" value="0.71"></div>
+                <div class="ctl"><div class="row"><label for="dS2">Runner-up stage probability</label><output id="dS2V"></output></div><input id="dS2" type="range" min="0" max="0.5" step="0.01" value="0.21"></div>
+                <label class="check"><input id="dBundle" type="checkbox" checked data-user="1">Stage model returned an automatic decision</label>
+                <label class="check"><input id="dOrd" type="checkbox">Ordinal model contradicts the fused stage</label>
+              </div>
+              <div class="group">
+                <span class="lbl">Alignment confidence ingredients</span>
+                <div class="ctl"><div class="row"><label for="dRef">Reference overlap</label><output id="dRefV"></output></div><input id="dRef" type="range" min="0" max="1" step="0.01" value="0.78"></div>
+                <div class="ctl"><div class="row"><label for="dTpl">Template similarity</label><output id="dTplV"></output></div><input id="dTpl" type="range" min="0" max="1" step="0.01" value="0.55"></div>
+                <div class="ctl"><div class="row"><label for="dArea">Wing area as share of canvas</label><output id="dAreaV"></output></div><input id="dArea" type="range" min="0" max="0.8" step="0.01" value="0.30"></div>
+              </div>
+              <div class="group">
+                <span class="lbl">After manual alignment</span>
+                <label class="check"><input id="dManual" type="checkbox">I re-ran it with manual alignment</label>
+                <label class="check"><input id="dConflict" type="checkbox" disabled>The wing family I chose differs from the model’s</label>
+              </div>
+            </div>
+            <div style="display:grid;gap:16px;min-width:0;align-content:start">
+              <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><span class="small muted">Decision</span><span class="pill" id="dPill"></span></div>
+              <p id="dSay" style="font-size:15px"></p>
+              <div class="ctl">
+                <div class="row"><span>Alignment confidence</span><output id="dConfV"></output></div>
+                <div class="meter" aria-hidden="true"><b id="dConfBar"></b><i style="left:62%" title="threshold 62%"></i></div>
+                <span class="small muted">0.62 × overlap + 0.23 × template + 0.15 × mask sanity. The line marks the 62% threshold.</span>
+              </div>
+              <dl class="kv" id="dKV"></dl>
+              <div style="display:grid;gap:8px"><span class="small muted">Review reasons the page would show</span><ul class="reasons" id="dReasons"></ul></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 RESULT -->
+    <section id="result">
+      <span class="eyebrow">Prediction-linked atlas</span>
+      <h2>The result page</h2>
+      <div class="prose">
+        <p>After a prediction the site moves to <code>/en/result/</code>. The header shows which atlas is displayed and whether the model chose it (“model-selected atlas”) or you need to (“review required”). Three summary panels give the wing probability, the stage probability, and a facts box comparing the model’s prediction with the atlas being shown and the alignment status.</p>
+        <p>Below are four panels: your uploaded DAPI image, your mask and alignment (switch between Overlay, Image and Mask), the standard DAPI for the chosen wing and stage, and the interactive Gene &amp; Vein atlas embedded live. <b>Expand</b> opens that atlas full size, and <b>Back to alignment</b> returns you to the predictor with your run loaded, so you can adjust it without the page jumping away again.</p>
+        <p>When review is required, a chooser lists all six combinations with their joint probability. Picking one changes only the view. The model result is kept, and your choice is not saved as a training label.</p>
+      </div>
+      <h3>Review reasons, decoded</h3>
+      <div class="tscroll">
+        <table>
+          <thead><tr><th>Code on the page</th><th>What it means</th><th>What to try</th></tr></thead>
+          <tbody>
+            <tr><td><code>wing_type_probability_below_0.62</code></td><td>The model is not convinced it is a forewing or a hindwing.</td><td>Check the mask; supply your own if the outline is wrong.</td></tr>
+            <tr><td><code>wing_type_margin_below_0.06</code></td><td>Forewing and hindwing are nearly tied.</td><td>Same as above. With only two classes this usually comes with the line above.</td></tr>
+            <tr><td><code>stage_probability_below_0.48</code></td><td>No stage reaches 48%.</td><td>Look at the Stage panel; choose between the top two yourself.</td></tr>
+            <tr><td><code>stage_margin_below_0.04</code></td><td>The top two stages are within 4 points.</td><td>Your wing may sit between stages. Compare both atlases.</td></tr>
+            <tr><td><code>stage_bundle_decision=…</code></td><td>The stage model for that wing family flagged its own result as <code>uncertain_review</code>, for example because its fused confidence or margin is low or the wing is far from every reference wing.</td><td>Read the evidence card to see which signal disagrees.</td></tr>
+            <tr><td><code>ordinal_conflict</code></td><td>The ordinal model puts the wing two stages away from the fused answer, or its maturity estimate is too far off.</td><td>Treat the stage as uncertain.</td></tr>
+            <tr><td><code>alignment_confidence_below_threshold</code></td><td>Alignment confidence is under 62%.</td><td>Use manual alignment and re-predict.</td></tr>
+            <tr><td><code>forewing alignment failed</code> / <code>hindwing alignment failed</code></td><td>The image could not be aligned to that wing family at all.</td><td>Check that the image contains one whole wing.</td></tr>
+            <tr><td><code>manual_family_conflicts_with_type_model</code></td><td>After manual alignment, the family you chose is not the one the wing-type model prefers.</td><td>Fine if you are sure; it simply keeps the result in review.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 04 EXPRESSION -->
+    <section id="expression">
+      <span class="eyebrow">Gene Expression workspace</span>
+      <h2>Read one gene at a time</h2>
+      <div class="prose">
+        <p>The expression workspace shows pure expression with no DAPI or vein background. Choose a gene, a wing family and a stage in the left column; the middle column shows the image, and the right column, “Behind the view,” explains where it came from. Drag to pan, scroll to zoom and double-click to reset. When several panels are shown, they zoom and pan together.</p>
+      </div>
+      <div class="split">
+        <div class="map map-atlas" role="group" aria-label="Gene expression page map" data-map="atlas">
+          <button style="grid-area:top" data-k="top"><small>top bar</small>Workspace links · Copy view link</button>
+          <button style="grid-area:side" data-k="side"><small>01 / Gene expression</small>Gene, wing, stage, processing, representation, opacity</button>
+          <button style="grid-area:tabs" data-k="tabs"><small>02 / Inspect &amp; compare</small>Layout tabs · zoom toolbar</button>
+          <button style="grid-area:view" data-k="view"><small>viewport</small>Image panels with the 0–1 legend</button>
+          <button style="grid-area:ev" data-k="ev"><small>03 / Evidence</small>Facts, review status, diagnostics, downloads</button>
+        </div>
+        <div class="mapnote" id="note-atlas" aria-live="polite"></div>
+      </div>
+
+      <h3>Comparison layouts</h3>
+      <div class="tscroll">
+        <table>
+          <thead><tr><th>Tab</th><th>Shows</th><th>Good for</th></tr></thead>
+          <tbody>
+            <tr><td>Single view</td><td>The selected gene, wing, stage and processing method.</td><td>Reading the pattern closely.</td></tr>
+            <tr><td>Across stages</td><td>Stages 0.5, 0.75 and 1.0 for the chosen wing.</td><td>Following a pattern through development.</td></tr>
+            <tr><td>Fore / Hind</td><td>Forewing and hindwing at the chosen stage.</td><td>Spotting wing-specific domains.</td></tr>
+            <tr><td>Source images</td><td>The individual registered inputs behind the average, 12 per page, each with its registration method and selection TRE.</td><td>Checking whether one sample dominates the average.</td></tr>
+            <tr><td>Compare all three methods</td><td>Baseline, soft gating and bilateral + soft gating side by side (button under Advanced settings).</td><td>Deciding whether faint signal is real or processing.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Processing methods</h3>
+      <div class="widget">
+        <div class="wbody tabs">
+          <div class="seg" role="tablist" aria-label="Processing methods" id="procTabs">
+            <button role="tab" aria-pressed="true" data-p="early_soft_q20">Soft gating (default)</button>
+            <button role="tab" aria-pressed="false" data-p="baseline">Baseline (control)</button>
+            <button role="tab" aria-pressed="false" data-p="bilateral_soft_q20">Bilateral + soft-q20</button>
+          </div>
+          <div class="tabpanel" id="procPanel" role="tabpanel"></div>
+          <p class="small muted">Registration, gain and the display scale are fixed across all three, so any difference you see comes from processing alone.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <h3>Heatmap or intensity particles</h3>
+        <p><b>Expression heatmap</b> draws relative expression on a fixed 0 to 1 scale that never rescales between views. <b>Intensity particles</b> draw sampled points in tiers set at the baseline 50th and 85th percentiles. The particles are display samples, not individual mRNA molecules. The opacity slider changes only how the image is drawn.</p>
+        <h3>Signal &amp; coverage diagnostics</h3>
+        <p>The right column reports four numbers for the selected processing method. <b>Strong retained</b> and <b>Weak retained</b> are the share of strong and weak signal that survived processing. <b>Outside reference</b> is the share of signal falling outside the standard wing outline. <b>Standard coverage</b> is how much of the standard wing the samples cover. They describe processing and coverage; they are not accuracy, precision or recall.</p>
+      </div>
+    </section>
+
+    <!-- 05 ANATOMY -->
+    <section id="anatomy">
+      <span class="eyebrow">Anatomy &amp; Layers workspace</span>
+      <h2>Place signal on the standard wing</h2>
+      <div class="prose">
+        <p>This workspace starts from the standard DAPI image and the confirmed vein layer for the chosen wing and stage. The veins are frozen, human-selected representatives and are never re-fitted: the forewing references have 13, 15 and 16 vein branches at stages 0.5, 0.75 and 1.0, and the hindwing references have 11, 12 and 11. Turn on <b>Show selected gene layers</b> and tick up to four genes, each with its own color and opacity. Every gene group in this release shares its reference’s coordinate frame, so any gene can be overlaid at any wing and stage.</p>
+      </div>
+      <div class="tscroll">
+        <table>
+          <thead><tr><th>Display preset</th><th class="num">DAPI</th><th class="num">Gene</th><th class="num">Vein</th><th>Gene blend</th><th>When to use</th></tr></thead>
+          <tbody>
+            <tr><td>Structure first (recommended)</td><td class="num">52%</td><td class="num">60%</td><td class="num">66%</td><td>Natural alpha layers</td><td>Orientation and vein context come first.</td></tr>
+            <tr><td>Signal first</td><td class="num">20%</td><td class="num">86%</td><td class="num">40%</td><td>Screen / mixed overlap</td><td>Faint expression; overlaps lighten.</td></tr>
+            <tr><td>Balanced layers</td><td class="num">40%</td><td class="num">72%</td><td class="num">54%</td><td>Natural alpha layers</td><td>Figures where both matter.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="prose">
+        <p>Moving any slider switches the preset to <b>Custom controls</b>. Other settings: <b>DAPI source</b> (brightness-normalized display or original intensity), <b>Vein style</b> (natural ribbon or outline), vein color, and <b>Layer order</b> (vein above genes, or genes above vein). The <b>Compare display styles</b> tab shows all three presets at once with your layers and zoom shared.</p>
+        <p>Each gene starts with its own color from the palette below. You can change any of them, and your colors travel with the view link.</p>
+      </div>
+      <div class="palette" id="palette" aria-label="Default gene colors"></div>
+      <p class="small muted">Color mixing in an overlay is qualitative. It shows where independent samples overlap on the standard wing, not that two genes are expressed in the same cells.</p>
+    </section>
+
+    <!-- 06 COVERAGE + LINKS -->
+    <section id="coverage">
+      <span class="eyebrow">Data coverage &amp; share links</span>
+      <h2>How many images stand behind each map</h2>
+      <div class="prose">
+        <p>Each cell counts the source images averaged for that gene, wing and stage. Select a cell to load it into the link builder, then open it on the live site or copy the link. A dot marks a single-sample map, which the site labels “Single-sample representative map, not a population consensus.”</p>
+      </div>
+      <div class="widget">
+        <div class="wbody">
+          <div class="tscroll" style="border:0;background:none">
+            <table class="heat" id="heat" aria-label="Number of source images per gene, wing and stage"></table>
+          </div>
+          <div class="heat-legend"><span>1<span class="ramp" aria-hidden="true"></span>20 images</span><span><span class="dot"></span>single-sample map</span><span>Genes marked <code>L</code>: legacy groups, registration experimental. Others: registration review pending.</span></div>
+        </div>
+      </div>
+
+      <div class="widget" id="linkWidget">
+        <div class="whead"><h3>Build a share link</h3><span>Builds a starting view; use “Copy view link” in the live workspace to preserve all control settings</span></div>
+        <div class="wbody">
+          <div class="selinfo" id="lSel"></div>
+          <div class="ctlgrid">
+            <div class="ctl"><span>Workspace</span><div class="seg" id="lWs"><button aria-pressed="true" data-v="atlas">Gene expression</button><button aria-pressed="false" data-v="anatomy">Anatomy &amp; layers</button></div></div>
+            <div class="ctl"><span>Site</span><div class="seg" id="lLang"><button aria-pressed="true" data-v="en">English</button><button aria-pressed="false" data-v="zh">Chinese</button></div></div>
+            <div class="ctl"><label for="lGene">Gene</label><select id="lGene"></select></div>
+            <div class="ctl"><label for="lMode">Layout</label><select id="lMode"></select></div>
+            <div class="ctl"><label for="lWing">Wing family</label><select id="lWing"><option value="forewing">Forewing</option><option value="hindwing">Hindwing</option></select></div>
+            <div class="ctl"><label for="lStage">Stage</label><select id="lStage"><option value="0.5">0.5</option><option value="0.75">0.75</option><option value="1.0">1.0</option></select></div>
+            <div class="ctl"><label for="lVar">Processing</label><select id="lVar"><option value="early_soft_q20">Soft gating (default)</option><option value="baseline">Baseline (control)</option><option value="bilateral_soft_q20">Bilateral + soft-q20</option></select></div>
+            <div class="ctl"><label for="lRep">Representation</label><select id="lRep"><option value="heat">Expression heatmap</option><option value="points">Intensity particles</option></select></div>
+          </div>
+          <div class="group" id="lAnat" hidden>
+            <span class="lbl">Overlay genes (up to four)</span>
+            <div class="genes" id="lGenes"></div>
+            <div class="ctl" style="max-width:320px"><label for="lPreset">Display preset</label><select id="lPreset"><option value="structure">Structure first</option><option value="signal">Signal first</option><option value="balanced">Balanced layers</option></select></div>
+          </div>
+          <div class="urlbox">
+            <div class="url" id="lUrl"></div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+              <a class="btn primary" id="lOpen" href="#" target="_blank" rel="noopener">Open this view</a>
+              <button class="btn" id="lCopy" type="button">Copy link</button>
+              <span class="small muted" id="lCopied" aria-live="polite"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 07 READING -->
+    <section id="reading">
+      <span class="eyebrow">Interpretation</span>
+      <h2>Reading the images responsibly</h2>
+      <div class="prose">
+        <p>Expression values are relative fluorescence, not molecule counts, and they are not calibrated across samples or genes. ROI gains and imaging batches differ, so compare spatial patterns between stages and wings rather than absolute brightness.</p>
+        <p>Registration of the gene images still awaits method-level confirmation. The 48 newer groups are marked “registration review required,” and the 24 legacy groups (<i>dll</i>, <i>dpp</i>, <i>fz9</i>, <i>hh</i>) have accepted sample quality but experimental registration. The integrity checks prove that the files are intact and that the gene and vein frames match exactly. They do not prove that the biological registration is accurate.</p>
+        <p>The standard anatomy is representative, not independent anatomical ground truth. Where a combination has no accepted samples, the site shows nothing rather than inventing a pattern.</p>
+        <p>Prediction confidence values are model outputs, and alignment confidence is a heuristic score, not a probability. A regression run on a known reference image shows the pipeline is unchanged; it does not measure predictive accuracy.</p>
+      </div>
+    </section>
+
+    <!-- 08 DOWNLOADS -->
+    <section id="downloads">
+      <span class="eyebrow">Original files</span>
+      <h2>Downloading original images and arrays</h2>
+      <div class="prose">
+        <p>Images on the site are reduced previews with a longest edge of 960 pixels, and you are free to view and save them. The originals are listed on one page, linked from the banner at the bottom of every workspace (“Original images &amp; data (password required)”) and reachable directly at <code>/downloads/</code>. Your browser will ask for a username and password: the username is <code>atlas_download</code>, and the password comes from the project owner.</p>
+        <p>For each gene, wing and stage group, and for each of the three processing methods, the list includes the heatmap and layer PNGs, a 16-bit intensity PNG and these arrays:</p>
+      </div>
+      <div class="tscroll">
+        <table>
+          <thead><tr><th>File</th><th>Label in the workspace</th></tr></thead>
+          <tbody>
+            <tr><td><code>expression_float.npy</code></td><td>Float intensity</td></tr>
+            <tr><td><code>coverage_count.npy</code></td><td>Coverage</td></tr>
+            <tr><td><code>between_sample_sd.npy</code></td><td>Uncertainty</td></tr>
+            <tr><td><code>missing_support.npy</code></td><td>Missing support</td></tr>
+            <tr><td><code>outside_reference_conflict.npy</code></td><td>Outside conflict</td></tr>
+            <tr><td><code>points.npz</code></td><td>Particles</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted" style="max-width:70ch">The individual aligned source images and the six anatomy packages (DAPI original and normalized, vein layers, approved vein + DAPI overlay, selection manifest) are on the same page. Anything outside the published catalog is refused, even with the password.</p>
+    </section>
+
+    <!-- 09 TROUBLESHOOTING -->
+    <section id="troubleshooting">
+      <span class="eyebrow">Troubleshooting</span>
+      <h2>When something does not work</h2>
+      <div>
+        <details class="faq"><summary><span>The predictor says the service is preparing<q>service preparing · The prediction service is preparing or temporarily unavailable.</q></span></summary><div><p>The free prediction backend sleeps when idle and takes a little while to wake. Wait a minute and refresh. The atlas and anatomy workspaces keep working in the meantime because they are served separately.</p></div></details>
+        <details class="faq"><summary><span>My submission was turned away<q>Another prediction is running. Please wait before submitting again. (HTTP 409)</q></span></summary><div><p>The backend runs one prediction at a time for everyone. Wait for the other run to finish and submit again.</p></div></details>
+        <details class="faq"><summary><span>The upload is too large<q>The image and mask must total no more than 64 MB. (HTTP 413)</q></span></summary><div><p>Export a single-channel 8-bit PNG of the DAPI channel, or crop to the wing. Prediction uses grayscale only.</p></div></details>
+        <details class="faq"><summary><span>The origin check failed<q>The request origin check failed. Refresh this page and try again. (HTTP 403)</q></span></summary><div><p>The page sends predictions only from its own site. Refresh, and make sure you are on the English or the Chinese site directly rather than an embedded or cached copy.</p></div></details>
+        <details class="faq"><summary><span>The service could not be reached<q>The cloud prediction service could not be reached. Please try again shortly. (HTTP 5xx)</q></span></summary><div><p>A temporary network or backend problem. A timeout can occur after a submission has started: check Recent Predictions before submitting again.</p></div></details>
+        <details class="faq"><summary><span>An old result will not open<q>Could not load this result · Prediction record unavailable</q></span></summary><div><p>Your predictions are tied to a private cookie in the browser you used, kept for 30 days. They will not open in another browser, after you clear cookies, for a colleague you send the link to, or on the other language site (the English and Chinese sites keep separate histories). To share a prediction, send screenshots, or share an atlas view link instead.</p></div></details>
+        <details class="faq"><summary><span>A panel says there is no data<q>No accepted samples for this combination · No extracted data … No expression is invented.</q></span></summary><div><p>In this release every gene has data at every wing and stage, so this should only appear for genes that are registered but not yet extracted, which the gene menu marks “awaiting data.”</p></div></details>
+        <details class="faq"><summary><span>I cannot tick a fifth gene<q>Choose up to four genes for a readable overlay.</q></span></summary><div><p>Overlays are limited to four genes. Untick one first.</p></div></details>
+        <details class="faq"><summary><span>A gene is greyed out in the overlay list<q>Overlay blocked: incompatible coordinate frames · frame differs</q></span></summary><div><p>The site refuses to overlay a gene whose coordinate frame differs from the reference wing, rather than warping it silently. All 72 groups in this release match, so if you see this after a data update, tell the maintainer.</p></div></details>
+        <details class="faq"><summary><span>A download asks for a password<q>Original downloads require a separate password.</q></span></summary><div><p>That is expected. Use the <code>atlas_download</code> account. Previews on the site stay free to view and save.</p></div></details>
+      </div>
+    </section>
+
+    <!-- 10 MAINTAINERS -->
+    <section id="maintainers">
+      <span class="eyebrow">For maintainers</span>
+      <h2>How it is built</h2>
+      <div class="prose">
+        <p>The public sites are static and run on Cloudflare Pages, one project per language. Each site’s Worker serves the pages, the atlas catalog and the preview images itself, and forwards only predictions, results and original downloads to a Python backend in a ModelScope Docker Studio. There, a single dispatcher on port 7860 is the only exposed service; the per-language gateways, the password-checking gateway and the prediction engine all listen on loopback. The private data bundle (about 18.6 GiB, 4,139 files) is downloaded from a private dataset and SHA-256-verified on startup.</p>
+      </div>
+      <div class="arch">
+        <svg viewBox="0 0 900 290" role="img" aria-label="Architecture: browser to Cloudflare Pages sites, which forward dynamic requests to a ModelScope Studio dispatcher, per-language gateways, a secure gateway and the backend, fed by a private dataset">
+          <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+          <rect class="box" x="10" y="115" width="110" height="56" rx="8"/><text x="65" y="139" text-anchor="middle">Visitor</text><text class="sub" x="65" y="157" text-anchor="middle">browser</text>
+          <rect class="box pub" x="170" y="62" width="170" height="60" rx="8"/><text x="255" y="86" text-anchor="middle">Pages · English</text><text class="sub" x="255" y="104" text-anchor="middle">worker + previews</text>
+          <rect class="box pub" x="170" y="166" width="170" height="60" rx="8"/><text x="255" y="190" text-anchor="middle">Pages · Chinese</text><text class="sub" x="255" y="208" text-anchor="middle">worker + previews</text>
+          <path class="edge" d="M120,135 C145,120 150,98 168,94" marker-end="url(#arr)"/>
+          <path class="edge" d="M120,152 C145,168 150,192 168,196" marker-end="url(#arr)"/>
+          <rect class="zone" x="380" y="18" width="510" height="254" rx="12"/><text class="zl" x="396" y="38">MODELSCOPE DOCKER STUDIO</text>
+          <rect class="box" x="400" y="115" width="120" height="58" rx="8"/><text x="460" y="139" text-anchor="middle">dispatcher</text><text class="sub" x="460" y="157" text-anchor="middle">:7860 public</text>
+          <path class="edge" d="M340,92 C370,96 372,128 398,136" marker-end="url(#arr)"/>
+          <path class="edge" d="M340,196 C370,192 372,160 398,152" marker-end="url(#arr)"/>
+          <rect class="box" x="555" y="62" width="130" height="54" rx="8"/><text x="620" y="84" text-anchor="middle">gateway · en</text><text class="sub" x="620" y="102" text-anchor="middle">:8891</text>
+          <rect class="box" x="555" y="172" width="130" height="54" rx="8"/><text x="620" y="194" text-anchor="middle">gateway · zh</text><text class="sub" x="620" y="212" text-anchor="middle">:8890</text>
+          <path class="edge" d="M520,135 C535,120 535,96 553,92" marker-end="url(#arr)"/>
+          <path class="edge" d="M520,153 C535,168 535,192 553,196" marker-end="url(#arr)"/>
+          <rect class="box" x="720" y="62" width="150" height="54" rx="8"/><text x="795" y="84" text-anchor="middle">secure gateway</text><text class="sub" x="795" y="102" text-anchor="middle">:8880 passwords</text>
+          <path class="edge" d="M685,89 L718,89" marker-end="url(#arr)"/>
+          <path class="edge" d="M685,196 C705,190 705,120 730,117" marker-end="url(#arr)"/>
+          <rect class="box" x="720" y="152" width="150" height="54" rx="8"/><text x="795" y="174" text-anchor="middle">backend</text><text class="sub" x="795" y="192" text-anchor="middle">:8881 engine</text>
+          <path class="edge" d="M795,116 L795,150" marker-end="url(#arr)"/>
+          <rect class="box priv" x="720" y="228" width="150" height="36" rx="8"/><text class="sub" x="795" y="251" text-anchor="middle">private dataset</text>
+          <path class="edge dash" d="M795,228 L795,208" marker-end="url(#arr)"/>
+        </svg>
+      </div>
+      <div class="prose">
+        <p>The single-port Docker service also offers the full interface at <code>http://127.0.0.1:7860/en/</code> and <code>/zh/</code>. Local gateways and Pages use the same frontend tree.</p><p>To edit what visitors see, change the files under <code>public/en/en/</code> and <code>public/zh/zh/</code>; the two languages are separate copies. The Worker has a test suite (<code>npm test</code>); gateway routing is checked with <code>python -m unittest discover -s tests -p "test_*.py"</code>. Setup, configuration variables, local running and the update procedure are in the repository <code>README.md</code>, and the full deployment walkthrough is in <code>deploy/DEPLOYMENT_ZH.md</code>.</p>
+      </div>
+    </section>
+  <section class="section" id="release-review"><h2>Release review and credits</h2><p>HH stages 0.5 and 0.75 are being reviewed following lab feedback. Additional staining photographs are visual guidance only; the current release still has 291 images and 72 groups.</p><p>Platform: Huang Mengxuan. Research supervision: Antonia Monteiro, <a href="https://lepdata.org/monteiro/" target="_blank" rel="noopener">Monteiro Lab</a>, NUS. Lab colleagues supplied the initial manual and README drafts. Software and project documentation: MIT; scientific images, arrays and models have separate data-use terms.</p><p><a href="https://github.com/huangmengxuan351-cpu/bicyclus-wing-atlas/issues/new" target="_blank" rel="noopener">Feedback / report an issue</a> · <a href="https://bicycluswingatlas.pages.dev/" target="_blank" rel="noopener">Project entry</a></p></section></main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <span>Bicyclus Wing Atlas · manual for atlas release stage_atlas_portal_v2 (12 genes, 291 images)</span>
+    <span><a href="https://bicyclus-wing-atlas-en.pages.dev/" target="_blank" rel="noopener">English site</a> · <a href="https://bicyclus-wing-atlas-zh.pages.dev/" target="_blank" rel="noopener">Chinese edition</a></span>
+  </div>
+</footer>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const SITES={en:"https://bicyclus-wing-atlas-en.pages.dev",zh:"https://bicyclus-wing-atlas-zh.pages.dev"};
+const GENES=["dll","dpp","fz9","hh","mad6","omb","optix","sal","tkv","vg","wg","wnt10"];
+const PALETTE={dll:"#56d4f0",dpp:"#ef9a45",fz9:"#ea82b6",hh:"#b5ce50",mad6:"#938de6",omb:"#57c8a0",optix:"#e57368",sal:"#b896dd",tkv:"#83cd63",vg:"#83d5d0",wg:"#edca86",wnt10:"#cc92b5"};
+// n source images and registration origin (L = legacy, P = provisional) per gene / wing / stage, from public/en/data/catalog.json
+const DATA={"mad6":{"f0.5":[3,"P"],"f0.75":[4,"P"],"f1.0":[3,"P"],"h0.5":[2,"P"],"h0.75":[4,"P"],"h1.0":[1,"P"]},"omb":{"f0.5":[4,"P"],"f0.75":[7,"P"],"f1.0":[15,"P"],"h0.5":[11,"P"],"h0.75":[7,"P"],"h1.0":[20,"P"]},"dll":{"f0.5":[1,"L"],"f0.75":[10,"L"],"f1.0":[4,"L"],"h0.5":[6,"L"],"h0.75":[9,"L"],"h1.0":[11,"L"]},"dpp":{"f0.5":[2,"L"],"f0.75":[4,"L"],"f1.0":[5,"L"],"h0.5":[2,"L"],"h0.75":[1,"L"],"h1.0":[4,"L"]},"fz9":{"f0.5":[5,"L"],"f0.75":[5,"L"],"f1.0":[5,"L"],"h0.5":[7,"L"],"h0.75":[5,"L"],"h1.0":[5,"L"]},"hh":{"f0.5":[4,"L"],"f0.75":[3,"L"],"f1.0":[4,"L"],"h0.5":[4,"L"],"h0.75":[4,"L"],"h1.0":[1,"L"]},"optix":{"f0.5":[2,"P"],"f0.75":[2,"P"],"f1.0":[2,"P"],"h0.5":[2,"P"],"h0.75":[3,"P"],"h1.0":[2,"P"]},"sal":{"f0.5":[2,"P"],"f0.75":[4,"P"],"f1.0":[6,"P"],"h0.5":[1,"P"],"h0.75":[9,"P"],"h1.0":[9,"P"]},"tkv":{"f0.5":[1,"P"],"f0.75":[2,"P"],"f1.0":[5,"P"],"h0.5":[2,"P"],"h0.75":[2,"P"],"h1.0":[2,"P"]},"vg":{"f0.5":[1,"P"],"f0.75":[3,"P"],"f1.0":[2,"P"],"h0.5":[1,"P"],"h0.75":[1,"P"],"h1.0":[3,"P"]},"wg":{"f0.5":[2,"P"],"f0.75":[3,"P"],"f1.0":[2,"P"],"h0.5":[3,"P"],"h0.75":[2,"P"],"h1.0":[1,"P"]},"wnt10":{"f0.5":[1,"P"],"f0.75":[2,"P"],"f1.0":[6,"P"],"h0.5":[2,"P"],"h0.75":[3,"P"],"h1.0":[3,"P"]}};
+const STAGES=["0.5","0.75","1.0"];
+const pct=x=>`${(x*100).toFixed(1)}%`;
+const wingLabel=w=>w==="forewing"?"Forewing":"Hindwing";
+
+/* ---------- page maps ---------- */
+const MAPS={
+  pred:{
+    up:["Upload form","Choose the DAPI image (PNG, JPG or TIFF), optionally a mask, then press Run Prediction. Image and mask together can be up to 64 MB."],
+    mod:["Model card","Shows whether the wing-type model and both stage models are loaded (status pill “ready”) and which stage profile is active. “service preparing” means the backend is still waking up."],
+    sum:["Most likely · decision badge","The headline result, for example “hindwing 91.0% · stage 0.75 71.0%”. The badge reads auto_candidate, manual_candidate or needs_review; hover it to see the review reason."],
+    bars:["Wing Type and Stage bars","Left: forewing against hindwing. Right: the three stage probabilities for the selected wing family. Stage probabilities are conditional on that wing."],
+    align:["Automatic alignment","Confidence bar plus reference overlap, mask sanity and the 62% threshold. “Manual alignment” opens the rotation, scale, position and flip controls with the yellow orientation guide."],
+    imgs:["Four preview images","Your grayscale input, the extracted mask, and both after automatic alignment to the selected wing family. If the aligned mask looks wrong, fix the alignment before trusting the stage."],
+    hist:["Recent Predictions","Your own recent runs on this site (time, file, wing type, stage, decision). Other visitors cannot see them, and they are kept per browser."]
+  },
+  atlas:{
+    top:["Top bar","Switch between Gene expression, Anatomy & layers and Predict a wing. The switch keeps your gene, wing and stage. Copy view link puts a link to this exact view on your clipboard."],
+    side:["Controls (01 / Gene expression)","Gene, wing family and stage; the processing method under Advanced settings; heatmap or intensity particles; expression opacity. The box at the bottom counts the registered genes, extracted genes and images."],
+    tabs:["Layout tabs and toolbar","Single view, Across stages, Fore / Hind, Source images. The toolbar has zoom out, zoom in, Fit and Fullscreen. Panels zoom and pan together."],
+    view:["Viewport","Each panel shows n, the number of source images. The legend underneath is a fixed 0–1 scale for heatmaps or the P50/P85 tiers for particles."],
+    ev:["Evidence (03)","Facts about the group (n, coordinate protocol), its registration review status, a plain-language note on the processing method, the diagnostics, and the downloads list for the password-protected originals."]
+  }
+};
+document.querySelectorAll("[data-map]").forEach(map=>{
+  const key=map.dataset.map, note=$("note-"+key), buttons=[...map.querySelectorAll("button")];
+  const pick=k=>{buttons.forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.k===k)));const [t,d]=MAPS[key][k];note.innerHTML=`<strong>${t}</strong><span>${d}</span>`;};
+  buttons.forEach(b=>b.addEventListener("click",()=>pick(b.dataset.k)));
+  pick(buttons[0].dataset.k);
+});
+
+/* ---------- processing tabs ---------- */
+const PROC={
+  early_soft_q20:["early_soft_q20","Soft weights are estimated before the frozen registration is replayed. Low signal-to-noise pixels are attenuated, which cleans up background, but genuinely weak expression can also be reduced. This is the default for browsing."],
+  baseline:["baseline","No additional soft-q20 weighting or filtering. Historical gain or background handling may already be present, so this is a control, not untouched microscope data. Use it to check whether a faint domain survives without soft gating."],
+  bilateral_soft_q20:["bilateral_soft_q20","Edge-preserving bilateral filtering runs before soft-q20. Smoothing can preserve edges, but it can also alter faint features. Compare with the default when you are judging boundaries."]
+};
+const procTabs=[...$("procTabs").querySelectorAll("button")];
+function showProc(k){procTabs.forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.p===k)));$("procPanel").innerHTML=`<span class="tag">variant = ${PROC[k][0]}</span><p>${PROC[k][1]}</p>`;}
+procTabs.forEach(b=>b.addEventListener("click",()=>showProc(b.dataset.p)));showProc("early_soft_q20");
+
+/* ---------- palette ---------- */
+$("palette").innerHTML=GENES.map(g=>`<span><i style="background:${PALETTE[g]}"></i>${g}</span>`).join("");
+
+/* ---------- alignment practice ---------- */
+(function(){
+  const cv=$("alignCanvas"), ctx=cv.getContext("2d"), N=2048;
+  // Schematic wing outline in canonical pose: distal protrusion left, base right, upper margin up.
+  const BASE=[[1700,960],[1500,860,1100,700,760,660],[560,640,420,700,360,800],[300,880,296,960,336,1012],[376,1062,356,1122,420,1180],[560,1360,900,1440,1180,1380],[1400,1330,1600,1200,1720,1080],[1762,1040,1752,990,1700,960]];
+  const TIP=[322,950], ROOT=[1738,1020];
+  function bez(p0,c1,c2,p1,t){const u=1-t;return[u*u*u*p0[0]+3*u*u*t*c1[0]+3*u*t*t*c2[0]+t*t*t*p1[0],u*u*u*p0[1]+3*u*u*t*c1[1]+3*u*t*t*c2[1]+t*t*t*p1[1]];}
+  // polygon centroid of the sampled outline, then shift everything so the canonical centroid sits at the canvas center
+  const poly=[];let cur=BASE[0];
+  for(let i=1;i<BASE.length;i++){const s=BASE[i];const c1=[s[0],s[1]],c2=[s[2],s[3]],p1=[s[4],s[5]];for(let k=0;k<24;k++)poly.push(bez(cur,c1,c2,p1,k/24));cur=p1;}
+  let A=0,cx=0,cy=0;for(let i=0;i<poly.length;i++){const [x0,y0]=poly[i],[x1,y1]=poly[(i+1)%poly.length],f=x0*y1-x1*y0;A+=f;cx+=(x0+x1)*f;cy+=(y0+y1)*f;}
+  A/=2;cx/=6*A;cy/=6*A;const dx=N/2-cx,dy=N/2-cy;
+  const shape=poly.map(([x,y])=>[x+dx,y+dy]), tip=[TIP[0]+dx,TIP[1]+dy], root=[ROOT[0]+dx,ROOT[1]+dy], C=[N/2,N/2];
+  let scr;
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  function newScramble(){
+    const sign=Math.random()<.5?-1:1;
+    scr={th:sign*rnd(35,165)*Math.PI/180,f:Math.random()<.5?-1:1,s:rnd(.78,1.22),tx:Math.round(rnd(-240,240)/8)*8,ty:Math.round(rnd(-200,200)/8)*8};
+    if(Math.abs(scr.tx)<64)scr.tx+=scr.tx<0?-96:96;
+  }
+  // linear part L = R(th) * diag(s*f, s); applied about the centroid
+  const lin=(th,s,f)=>{const c=Math.cos(th),n=Math.sin(th);return[c*s*f,-n*s,n*s*f,c*s];};
+  const mul=(a,b)=>[a[0]*b[0]+a[1]*b[2],a[0]*b[1]+a[1]*b[3],a[2]*b[0]+a[3]*b[2],a[2]*b[1]+a[3]*b[3]];
+  const ap=(m,p)=>[m[0]*p[0]+m[1]*p[1],m[2]*p[0]+m[3]*p[1]];
+  function user(){return{th:Number($("aRot").value)*Math.PI/180,s:Number($("aScale").value),f:$("aFlip").checked?-1:1,tx:Number($("aX").value),ty:Number($("aY").value)};}
+  function composite(){
+    const u=user(), L0=lin(scr.th,scr.s,scr.f), Lu=lin(u.th,u.s,u.f), M=mul(Lu,L0);
+    const T=[scr.tx+u.tx,scr.ty+u.ty]; // scrambled centroid is C+t0; user pivots there and adds its own translation
+    return{M,T,map:p=>{const q=ap(M,[p[0]-C[0],p[1]-C[1]]);return[C[0]+T[0]+q[0],C[1]+T[1]+q[1]];}};
+  }
+  function css(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
+  function draw(){
+    const W=cv.width,k=W/N; ctx.clearRect(0,0,W,W);
+    ctx.fillStyle=css("--scope");ctx.fillRect(0,0,W,W);
+    const guide=css("--guide");
+    ctx.strokeStyle="rgba(255,225,74,.22)";ctx.lineWidth=1;
+    for(let g=120;g<W;g+=120){ctx.beginPath();ctx.moveTo(g,0);ctx.lineTo(g,W);ctx.moveTo(0,g);ctx.lineTo(W,g);ctx.stroke();}
+    ctx.strokeStyle=guide;ctx.fillStyle=guide;ctx.lineWidth=4;
+    const m=W/2,arm=W*.42;
+    ctx.beginPath();ctx.moveTo(m-arm,m);ctx.lineTo(m+arm,m);ctx.moveTo(m,m-arm);ctx.lineTo(m,m+arm);ctx.stroke();
+    const head=(x,y,ax,ay)=>{ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-ax*18-ay*9,y-ay*18+ax*9);ctx.lineTo(x-ax*18+ay*9,y-ay*18-ax*9);ctx.closePath();ctx.fill();};
+    head(m-arm,m,-1,0);head(m+arm,m,1,0);head(m,m-arm,0,-1);head(m,m+arm,0,1);
+    ctx.beginPath();ctx.arc(m,m,14,0,Math.PI*2);ctx.stroke();
+    ctx.font="600 22px 'IBM Plex Sans',system-ui,sans-serif";ctx.textBaseline="middle";
+    ctx.lineWidth=4;ctx.strokeStyle="rgba(0,0,0,.75)";
+    const label=(t,x,y,a)=>{ctx.textAlign=a;ctx.strokeText(t,x,y);ctx.fillText(t,x,y);};
+    label("Distal protrusion",m-arm,m+34,"left");label("Wing base (proximal)",m+arm,m+34,"right");
+    label("Upper wing margin",m+18,m-arm+8,"left");label("Lower wing margin",m+18,m+arm-8,"left");
+    const {map}=composite(), mask=css("--mask");
+    ctx.beginPath();shape.forEach((p,i)=>{const [x,y]=map(p);i?ctx.lineTo(x*k,y*k):ctx.moveTo(x*k,y*k);});ctx.closePath();
+    ctx.fillStyle="rgba(71,215,232,.16)";ctx.fill();ctx.strokeStyle=mask;ctx.lineWidth=3;ctx.stroke();
+    const dot=(p,t)=>{const [x,y]=map(p);ctx.beginPath();ctx.arc(x*k,y*k,9,0,Math.PI*2);ctx.fillStyle=mask;ctx.fill();ctx.fillStyle="#e9fbff";ctx.font="500 19px 'IBM Plex Sans',system-ui,sans-serif";ctx.textAlign="center";ctx.lineWidth=4;ctx.strokeStyle="rgba(0,0,0,.8)";ctx.strokeText(t,x*k,y*k-24);ctx.fillText(t,x*k,y*k-24);};
+    dot(tip,"distal tip");dot(root,"base");
+  }
+  function evaluate(){
+    const {M,T}=composite(), det=M[0]*M[3]-M[1]*M[2], scale=Math.sqrt(Math.abs(det));
+    const ang=Math.atan2(M[2],M[0])*180/Math.PI, dist=Math.hypot(T[0],T[1]);
+    const mirrorOk=det>0, rotOk=mirrorOk&&Math.abs(ang)<=8, sizeOk=Math.abs(scale-1)<=.1, posOk=dist<=48;
+    const chips=[["Mirroring",mirrorOk],["Orientation",rotOk],["Size",sizeOk],["Position",posOk]];
+    $("aChips").innerHTML=chips.map(([t,ok])=>`<span class="chip ${ok?"ok":"no"}">${ok?"✓":"·"} ${t}</span>`).join("");
+    const v=$("aVerdict");
+    if(rotOk&&sizeOk&&posOk){v.className="verdict ok";v.textContent="Aligned. On the real page you would now press “Apply and re-predict.”";}
+    else{v.className="verdict";v.textContent=!mirrorOk?"The outline is a mirror image: the upper and lower margins are swapped. Tick Horizontal flip, then rotate.":!rotOk?"Rotate until the distal tip points left along the yellow arrow and the base points right.":!sizeOk?"Adjust Scale so the outline spans the guide like the original.":"Slide the outline so its center sits on the yellow circle.";}
+  }
+  function outputs(){$("aRotV").value=`${Number($("aRot").value).toFixed(0)}°`;$("aScaleV").value=`${Number($("aScale").value).toFixed(2)}×`;$("aXV").value=`${$("aX").value} px`;$("aYV").value=`${$("aY").value} px`;}
+  function update(){outputs();draw();evaluate();}
+  function reset(){$("aRot").value=0;$("aScale").value=1;$("aX").value=0;$("aY").value=0;$("aFlip").checked=false;update();}
+  ["aRot","aScale","aX","aY","aFlip"].forEach(id=>{$(id).addEventListener("input",update);$(id).addEventListener("change",update);});
+  $("aReset").addEventListener("click",reset);
+  $("aNew").addEventListener("click",()=>{newScramble();reset();});
+  newScramble();update();
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw);
+  if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",draw);
+  new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+})();
+
+/* ---------- decision checker ---------- */
+(function(){
+  const ids=["dWing","dS1","dS2","dBundle","dOrd","dRef","dTpl","dArea","dManual","dConflict"];
+  function run(){
+    const pw=Number($("dWing").value), s1=Number($("dS1").value);
+    const s2max=Math.min(s1,1-s1); $("dS2").max=s2max.toFixed(2);
+    let s2=Math.min(Number($("dS2").value),s2max); $("dS2").value=s2;
+    const s3=Math.max(0,1-s1-s2), wm=2*pw-1, sm=s1-Math.max(s2,s3);
+    const ref=Number($("dRef").value), tpl=Number($("dTpl").value), area=Number($("dArea").value);
+    const sanity=Math.min(1,Math.max(0,1-Math.abs(area-.32)/.30));
+    const conf=Math.min(1,Math.max(0,.62*ref+.23*tpl+.15*sanity));
+    // An ordinal conflict also stops the stage model from returning an automatic decision.
+    const ord=$("dOrd").checked; $("dBundle").disabled=ord; if(ord)$("dBundle").checked=false; else if($("dBundle").dataset.user!==undefined)$("dBundle").checked=$("dBundle").dataset.user==="1";
+    const bundleAuto=$("dBundle").checked&&!ord;
+    const manual=$("dManual").checked; $("dConflict").disabled=!manual; if(!manual)$("dConflict").checked=false;
+    $("dWingV").value=pct(pw);$("dS1V").value=pct(s1);$("dS2V").value=pct(s2);$("dRefV").value=pct(ref);$("dTplV").value=pct(tpl);$("dAreaV").value=pct(area);
+    const r=[];
+    if(manual){
+      if($("dConflict").checked)r.push("manual_family_conflicts_with_type_model");
+      if(conf<.62)r.push("alignment_confidence_below_threshold");
+      if(s1<.48)r.push("stage_probability_below_0.48");
+      if(sm<.04)r.push("stage_margin_below_0.04");
+      if($("dOrd").checked)r.push("ordinal_conflict");
+      if(!bundleAuto)r.push("stage_bundle_decision=uncertain_review");
+    }else{
+      if(pw<.62)r.push("wing_type_probability_below_0.62");
+      if(wm<.06)r.push("wing_type_margin_below_0.06");
+      if(s1<.48)r.push("stage_probability_below_0.48");
+      if(sm<.04)r.push("stage_margin_below_0.04");
+      if(!bundleAuto)r.push("stage_bundle_decision=uncertain_review");
+      if($("dOrd").checked)r.push("ordinal_conflict");
+      if(conf<.62)r.push("alignment_confidence_below_threshold");
+    }
+    const ok=r.length===0, label=ok?(manual?"manual_candidate":"auto_candidate"):"needs_review";
+    $("dPill").textContent=label;$("dPill").className="pill "+(ok?"auto":"review");
+    $("dSay").textContent=ok?"The matching atlas opens automatically, about a second after the result appears.":"The page stops and shows all six wing and stage combinations, ranked by joint probability, for you to choose from.";
+    $("dConfV").value=pct(conf);$("dConfBar").style.width=`${conf*100}%`;
+    $("dKV").innerHTML=`<dt>Wing margin</dt><dd>${pct(wm)}</dd><dt>Stage probabilities</dt><dd>${pct(s1)} · ${pct(s2)} · ${pct(s3)}</dd><dt>Stage margin</dt><dd>${pct(sm)}</dd><dt>Mask sanity</dt><dd>${pct(sanity)}</dd><dt>Top joint probability</dt><dd>${pct(pw*s1)}</dd>`;
+    $("dReasons").innerHTML=ok?`<li class="none">No review reasons. All checks pass.</li>`:r.map(x=>`<li>${x}</li>`).join("");
+  }
+  $("dBundle").addEventListener("click",()=>{$("dBundle").dataset.user=$("dBundle").checked?"1":"0";});
+  ids.forEach(id=>{$(id).addEventListener("input",run);$(id).addEventListener("change",run);});
+  run();
+})();
+
+/* ---------- coverage heatmap + link builder ---------- */
+const L={ws:"atlas",lang:"en",gene:"omb",wing:"hindwing",stage:"1.0",variant:"early_soft_q20",rep:"heat",mode:"single",overlay:["omb"],preset:"structure"};
+const MODES={atlas:[["single","Single view"],["stages","Across stages"],["wings","Fore / Hind"],["sources","Source images"],["methods","Compare all three methods"]],
+             anatomy:[["single","Layer workspace"],["styles","Compare display styles"],["stages","Across stages"],["wings","Fore / Hind"]]};
+function buildHeat(){
+  const t=$("heat");
+  let h=`<thead><tr><th></th><th colspan="3">Forewing</th><th class="gap"></th><th colspan="3">Hindwing</th></tr><tr><th scope="col">Gene</th>${STAGES.map(s=>`<th scope="col">${s}</th>`).join("")}<th class="gap"></th>${STAGES.map(s=>`<th scope="col">${s}</th>`).join("")}</tr></thead><tbody>`;
+  for(const g of GENES){
+    const legacy=DATA[g]["f0.5"][1]==="L";
+    h+=`<tr><th scope="row">${g}${legacy?"<small>L</small>":""}</th>`;
+    for(const w of ["f","h"]){
+      for(const s of STAGES){
+        const n=DATA[g][w+s][0], mix=Math.round(14+86*Math.sqrt((n-1)/19)), dark=mix>52;
+        h+=`<td><button type="button" class="${n===1?"single":""}" data-g="${g}" data-w="${w==="f"?"forewing":"hindwing"}" data-s="${s}" style="background:color-mix(in srgb,var(--teal) ${mix}%,var(--surface));color:${dark?"var(--on-teal)":"var(--ink)"}" aria-label="${g}, ${w==="f"?"forewing":"hindwing"}, stage ${s}: ${n} image${n===1?"":"s"}" aria-pressed="false">${n}</button></td>`;
+      }
+      if(w==="f")h+=`<td class="gap"></td>`;
+    }
+    h+=`</tr>`;
+  }
+  t.innerHTML=h+"</tbody>";
+  t.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{L.gene=b.dataset.g;L.wing=b.dataset.w;L.stage=b.dataset.s;if(!L.overlay.includes(L.gene)){L.overlay=[L.gene,...L.overlay].slice(0,4);}syncControls();renderLink();}));
+}
+function segBind(id,key){const btns=[...$(id).querySelectorAll("button")];btns.forEach(b=>b.addEventListener("click",()=>{L[key]=b.dataset.v;if(key==="ws"){const ok=MODES[L.ws].some(m=>m[0]===L.mode);if(!ok)L.mode="single";}syncControls();renderLink();}));}
+function syncControls(){
+  for(const [id,key] of [["lWs","ws"],["lLang","lang"]])$(id).querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===L[key])));
+  $("lMode").innerHTML=MODES[L.ws].map(([v,t])=>`<option value="${v}">${t}</option>`).join("");
+  $("lGene").value=L.gene;$("lMode").value=L.mode;$("lWing").value=L.wing;$("lStage").value=L.stage;$("lVar").value=L.variant;$("lRep").value=L.rep;$("lPreset").value=L.preset;
+  $("lAnat").hidden=L.ws!=="anatomy";
+  $("lGenes").innerHTML=GENES.map(g=>{const on=L.overlay.includes(g);return `<button type="button" class="gchip" data-g="${g}" aria-pressed="${on}" ${!on&&L.overlay.length>=4?"disabled":""}><i style="background:${PALETTE[g]}"></i>${g}</button>`;}).join("");
+  $("lGenes").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{const g=b.dataset.g;L.overlay=L.overlay.includes(g)?L.overlay.filter(x=>x!==g):[...L.overlay,g].slice(0,4);syncControls();renderLink();}));
+  document.querySelectorAll("#heat button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.g===L.gene&&b.dataset.w===L.wing&&b.dataset.s===L.stage)));
+}
+function renderLink(){
+  const p=new URLSearchParams({gene:L.gene,wing:L.wing,stage:L.stage,variant:L.variant,representation:L.rep,mode:L.mode});
+  if(L.ws==="anatomy"){p.set("genes",L.overlay.join(","));p.set("showDapi","1");p.set("showVein","1");p.set("showGenes",L.overlay.length?"1":"0");p.set("displayPreset",L.preset);}
+  const url=`${SITES[L.lang]}/${L.lang}/${L.ws}/?${p}`;
+  $("lUrl").textContent=url;$("lOpen").href=url;
+  const n=DATA[L.gene][(L.wing==="forewing"?"f":"h")+L.stage][0];
+  const extra=L.ws==="anatomy"?(L.overlay.length?` Overlay: <b>${L.overlay.join(", ")}</b> (${L.overlay.map(g=>"n="+DATA[g][(L.wing==="forewing"?"f":"h")+L.stage][0]).join(", ")}).`:" Overlay: none, anatomy only."):"";
+  $("lSel").innerHTML=`<b><i>${L.gene}</i> · ${wingLabel(L.wing)} · stage ${L.stage}</b> — ${n} source image${n===1?" (single-sample map)":"s"}.${extra}`;
+  $("lCopied").textContent="";
+}
+$("lGene").innerHTML=GENES.map(g=>`<option value="${g}">${g}</option>`).join("");
+segBind("lWs","ws");segBind("lLang","lang");
+for(const [id,key] of [["lGene","gene"],["lMode","mode"],["lWing","wing"],["lStage","stage"],["lVar","variant"],["lRep","rep"],["lPreset","preset"]])
+  $(id).addEventListener("change",e=>{L[key]=e.target.value;syncControls();renderLink();});
+$("lCopy").addEventListener("click",async()=>{const text=$("lUrl").textContent;try{await navigator.clipboard.writeText(text);$("lCopied").textContent="Link copied.";}catch{const r=document.createRange();r.selectNodeContents($("lUrl"));const s=getSelection();s.removeAllRanges();s.addRange(r);$("lCopied").textContent="Link selected. Press Ctrl+C or ⌘C to copy.";}});
+buildHeat();syncControls();renderLink();
+
+/* ---------- contents highlighting ---------- */
+(function(){
+  const links=[...document.querySelectorAll("#tocList a")], map=new Map(links.map(a=>[a.getAttribute("href").slice(1),a]));
+  if(!("IntersectionObserver" in window))return;
+  const seen=new Map();
+  const io=new IntersectionObserver(es=>{es.forEach(e=>seen.set(e.target.id,e.isIntersecting?e.intersectionRatio:0));let best=null,score=0;for(const [id,r] of seen)if(r>score){score=r;best=id;}if(best){links.forEach(a=>a.classList.remove("on"));map.get(best)?.classList.add("on");}},{rootMargin:"-10% 0px -55% 0px",threshold:[0,.1,.3,.6]});
+  document.querySelectorAll("main section[id]").forEach(s=>io.observe(s));
+  const h=location.hash.slice(1); if(h&&document.getElementById(h))document.getElementById(h).scrollIntoView();
+})();
+</script>
+
+</body>
+</html>

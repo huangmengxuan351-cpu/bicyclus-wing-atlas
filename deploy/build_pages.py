@@ -32,6 +32,7 @@ def main():
             destination = target / file.relative_to(source)
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(file, destination)
+    shutil.copy2(source / args.language / 'portal/index.html', target / 'index.html')
     manifest = json.loads((source / 'preview-packs.json').read_text(encoding='utf-8'))
     (target / 'packs').mkdir()
 

@@ -17,6 +17,12 @@
     originalDownloads.textContent="下载原始图像与数据（需密码）";
     originalDownloads.style.cssText='color:white;text-decoration:underline;display:inline-block;margin-left:12px;pointer-events:auto';
     note.append(originalDownloads);
+    const manualLink=document.createElement('a');
+    manualLink.href='/manual/';manualLink.target='_blank';manualLink.rel='noopener';
+    manualLink.textContent="使用手册";
+    manualLink.style.cssText='color:white;text-decoration:underline;display:inline-block;margin-left:12px;pointer-events:auto';
+    note.append(manualLink);
+
     
   function apply(){
     document.querySelectorAll('a[download],.report-links,#fullComparison').forEach(el=>{el.hidden=true;el.style.display='none'});

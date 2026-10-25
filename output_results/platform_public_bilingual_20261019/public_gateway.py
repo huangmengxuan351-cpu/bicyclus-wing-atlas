@@ -24,6 +24,8 @@ from pathlib import Path
 from urllib.parse import quote, unquote, urlsplit
 
 BASE = Path(__file__).resolve().parent
+sys.path.insert(0, str(BASE.parents[1] / 'deploy'))
+from frontend import resolve_frontend
 PRIVATE = BASE.parent / 'platform_local_secure_20261019'
 sys.path.insert(0, str(PRIVATE))
 from access_control import authenticate, credentials
@@ -228,30 +230,13 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith('/api/') or path.startswith(('/admin','/legacy-atlas','/runtime','/code_python','/output_results')):
             return self.send({'error':'Not a public route.'},403)
         if path=='/favicon.ico': return self.send(b'',204,'image/x-icon')
-        if path=='/': relative='portal/index.html'
-        else:
-            matched=re.fullmatch(r'/'+LANGUAGE+r'(/.*)?',path)
-            if matched:
-                rest=matched[1] or '/'
-                routes={'/':'portal/index.html','/atlas/':'atlas/index.html','/anatomy/':'atlas/anatomy.html',
-                        '/predict/':'predict/index.html','/result/':'portal/result.html'}
-                if re.fullmatch(r'/(atlas|anatomy|predict|result)',rest):
-                    return self.send(b'',302,'text/plain',{'Location':self.path.replace(path,path+'/',1)})
-                relative=routes.get(rest,rest.lstrip('/'))
-            elif re.fullmatch(r'/(atlas|anatomy|predict|result)/?',path):
-                return self.send(b'',302,'text/plain',{'Location':'/'+LANGUAGE+self.path})
-            else: return self.send({'error':'Page not found in this language edition.'},404)
-        folder=(BASE/'instances'/LANGUAGE/'frontend').resolve()
-        target=(folder/relative).resolve()
-        if not target.is_relative_to(folder) or not target.is_file(): return self.send({'error':'Page not found.'},404)
-        suffix=target.suffix.lower()
-        if suffix=='.html':
-            body=target.read_text(encoding='utf-8').replace('</body>',f'<script src="/{LANGUAGE}/access-display.js"></script></body>').encode()
-            return self.send(body,kind='text/html; charset=utf-8')
-        if suffix in ('.js','.css'):
-            return self.send(target.read_bytes(),kind='text/javascript; charset=utf-8' if suffix=='.js' else 'text/css; charset=utf-8')
-        if suffix=='.png': return self.proxy('/'+LANGUAGE+'/'+relative)
-        return self.send({'error':'Static file type is not public.'},403)
+        if path in ('/atlas', '/anatomy', '/predict', '/result'):
+            return self.send(b'',302,'text/plain',{'Location':'/'+LANGUAGE+path+'/'})
+        resolved = resolve_frontend(LANGUAGE, path)
+        if resolved is None:
+            return self.send({'error':'Page not found in this language edition.'},404)
+        target, kind = resolved
+        return self.send(target.read_bytes(), kind=kind)
 
     def handle_request(self):
         try: self.dispatch()
