@@ -127,6 +127,7 @@ function geneEvidence(group){
   $("facts").innerHTML=Object.entries(facts).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
   $("reviewStatus").textContent=group.origin==="legacy"?"Historical sample quality was accepted; registration remains experimental.":"Sample usability was accepted. The selected safe registration candidate remains pending method-level human confirmation.";
   $("statusBadge").textContent="Registration needs confirmation";
+  if(group.selection_status==="user_selected_final_composite"){$("reviewStatus").textContent="User-selected final composite; independent landmark validation is recorded separately.";$("statusBadge").textContent="Final composite selected";}
   const v=group.variants[state.variant],m=v.metrics;
   $("metrics").innerHTML=Object.entries({"Strong retained":pct(m.strong_retention),"Weak retained":pct(m.weak_retention),"Outside reference":pct(m.outside_reference_fraction),"Standard coverage":pct(m.target_coverage_fraction)}).map(([k,value])=>`<dt>${k}</dt><dd>${value}</dd>`).join("");
   const links={"Expression heatmap (PNG)":v.images.heatmap,"Transparent expression (PNG)":v.images.expression_layer,"Intensity particles (PNG)":v.images.points_layer,"Intensity (16-bit PNG)":v.images.intensity_16bit,"Float intensity (NPY)":v.files["expression_float.npy"],"Coverage (NPY)":v.files["coverage_count.npy"],"Uncertainty (NPY)":v.files["between_sample_sd.npy"],"Missing support (NPY)":v.files["missing_support.npy"],"Outside conflict (NPY)":v.files["outside_reference_conflict.npy"],"Particles (NPZ)":v.files["points.npz"]};
@@ -187,7 +188,7 @@ function render(){
     else makeAnatomyTile(state.wing,state.stage,"Standard DAPI / vein / expression",token);
   }else{
     $("legend").hidden=state.mode==="sources";$("legend").querySelector("i").style.background=state.representation==="points"?"linear-gradient(90deg,#47bdff,#ffae36,#fff187)":"";
-    $("legend").querySelector("span").textContent=state.representation==="points"?"Baseline P50 / P85 tiers":"Relative expression / 0-1";
+    $("legend").querySelector("span").textContent=state.representation==="points"?(group?.point_display?.sampling==="area_uniform"?"Area-uniform samples / P40, P50 / blue-orange-yellow":"Baseline P50 / P85 tiers"):"Relative expression / 0-1";
     $("modeNote").textContent="Pure expression, no DAPI or vein background. Linked zoom and pan.";
     notice(!group?"No extracted data for this combination. No expression is invented.":group.n===1?"Single-sample representative map, not a population consensus.":state.mode==="stages"||state.mode==="wings"?"Compare spatial patterns, not absolute mRNA abundance. ROI gains and batches differ.":"");
     if(state.mode==="sources"&&group)sources(group);
