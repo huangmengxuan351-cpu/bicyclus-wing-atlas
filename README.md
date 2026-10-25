@@ -4,7 +4,7 @@
 
 [**Project entry**](https://bicycluswingatlas.pages.dev/) · [**Open the English site**](https://bicyclus-wing-atlas-en.pages.dev/) · [**打开中文版**](https://bicyclus-wing-atlas-zh.pages.dev/) · [**English user manual**](https://bicyclus-wing-atlas-en.pages.dev/manual/) · [**中文使用手册**](https://bicyclus-wing-atlas-zh.pages.dev/manual/) · [Deployment guide (中文)](deploy/DEPLOYMENT_ZH.md)
 
-The atlas brings together 291 registered fluorescence images covering 12 genes, two wing families (forewing and hindwing) and three developmental stages (0.5, 0.75 and 1.0). The stage numbers label successive stages of wing development, using existing fluorescence images of fixed wings, with DAPI providing the nuclear reference channel. The project covers computational analysis and platform construction. Each gene, wing and stage combination has been summarized onto a shared 2048 × 2048 reference wing, so patterns can be compared side by side and laid over a standard DAPI image with its confirmed vein layer. You do not need an account to browse the atlas or to run a prediction. Only the original full-resolution images and numerical arrays are behind a download password.
+The atlas brings together 284 registered fluorescence images covering 12 genes, two wing families (forewing and hindwing) and three developmental stages (0.5, 0.75 and 1.0). The stage numbers label successive stages of wing development, using existing fluorescence images of fixed wings, with DAPI providing the nuclear reference channel. The project covers computational analysis and platform construction. Each gene, wing and stage combination has been summarized onto a shared 2048 × 2048 reference wing, so patterns can be compared side by side and laid over a standard DAPI image with its confirmed vein layer. You do not need an account to browse the atlas or to run a prediction. Only the original full-resolution images and numerical arrays are behind a download password.
 
 ---
 
@@ -24,7 +24,7 @@ For a guided walkthrough with interactive examples (a practice alignment, a deci
 
 ## What is in the atlas
 
-The released dataset contains 12 genes, 291 source images, 72 atlas groups (12 genes × 2 wings × 3 stages), 216 expression representations (each group processed three ways) and six anatomical references (one per wing and stage). The *hth* dataset has been deliberately excluded from this release.
+The released dataset contains 12 genes, 284 source images, 71 available atlas groups across 72 possible combinations (12 genes × 2 wings × 3 stages), 213 expression representations (each group processed three ways) and six anatomical references (one per wing and stage). The *hth* dataset has been deliberately excluded from this release.
 
 The number of source images behind each group is shown below. Groups with only one image are flagged in the interface as single-sample maps rather than population averages.
 
@@ -33,7 +33,7 @@ The number of source images behind each group is shown below. Groups with only o
 | *dll* | 1 | 10 | 4 | 6 | 9 | 11 | 41 |
 | *dpp* | 2 | 4 | 5 | 2 | 1 | 4 | 18 |
 | *fz9* | 5 | 5 | 5 | 7 | 5 | 5 | 32 |
-| *hh* | 4 | 3 | 4 | 4 | 4 | 1 | 20 |
+| *hh* | 2 | 2 | withdrawn | 4 | 4 | 1 | 13 |
 | *mad6* | 3 | 4 | 3 | 2 | 4 | 1 | 17 |
 | *omb* | 4 | 7 | 15 | 11 | 7 | 20 | 64 |
 | *optix* | 2 | 2 | 2 | 2 | 3 | 2 | 13 |
@@ -42,7 +42,7 @@ The number of source images behind each group is shown below. Groups with only o
 | *vg* | 1 | 3 | 2 | 1 | 1 | 3 | 11 |
 | *wg* | 2 | 3 | 2 | 3 | 2 | 1 | 13 |
 | *wnt10* | 1 | 2 | 6 | 2 | 3 | 3 | 17 |
-| **All genes** | **28** | **49** | **59** | **43** | **50** | **62** | **291** |
+| **All genes** | **26** | **48** | **55** | **43** | **50** | **62** | **284** |
 
 *FW = forewing, HW = hindwing. Counts come from `public/en/data/catalog.json`.*
 
@@ -50,7 +50,7 @@ Each group is available under three processing methods. **Soft gating** (`early_
 
 ### How to read the images responsibly
 
-Expression values are relative fluorescence, not molecule counts, and intensities are not calibrated across samples or genes. Intensity particles are display samples, not individual transcripts. When genes are overlaid in color, the mixing is qualitative and does not demonstrate co-expression in the same cells. Registration of the gene images is still marked as needing confirmation: 48 groups are "provisional, registration review required" and 24 older groups are "legacy quality accepted, registration experimental." The vein layers are frozen, human-selected representatives and are never re-fitted. The interface repeats these caveats next to the relevant controls.
+Expression values are relative fluorescence, not molecule counts, and intensities are not calibrated across samples or genes. Intensity particles are display samples, not individual transcripts. When genes are overlaid in color, the mixing is qualitative and does not demonstrate co-expression in the same cells. The two revised HH forewing composites are user-selected final outputs. Other gene-registration evidence retains its recorded provisional or legacy status; composite selection does not establish independent landmark accuracy. The vein layers are frozen, human-selected representatives and are never re-fitted. The interface repeats these caveats next to the relevant controls.
 
 The retention and coverage numbers shown under "Signal & coverage diagnostics" describe how much signal survived processing and how much of the reference wing is covered. They are not accuracy, precision or recall.
 
@@ -189,3 +189,8 @@ A software regression run on an existing reference image checks operation of the
 ## License and data use
 
 Project-authored software and project documentation are released under the [MIT License](LICENSE). Dependencies retain their respective licenses; see [NOTICE.md](NOTICE.md). Scientific images (including reduced previews), intensity arrays, trained model bundles and lab-supplied reference images are outside this software license and remain subject to separate permission from the relevant rights holders; see [DATA_USE.md](DATA_USE.md). Public viewing and password-authorized download do not establish a separate data-reuse license.
+
+
+## HH final revision · 26 October 2026
+
+Forewing HH 0.5 uses HHB3_1 + HHB3_2; forewing HH 0.75 uses HHB3_8 + HHB4_3_1 (G3, alpha=1). The reviewed continuous fields are preserved exactly. The 0.75 point view uses area-uniform sampling with fixed P40/P50 blue/orange/yellow display tiers; point counts represent sampled area. Other point views retain their documented sampling. Forewing HH 1.0 is withdrawn because of a stage assignment conflict, with historical records retained. The current atlas contains 284 image units, 71 groups and 213 processing outputs.

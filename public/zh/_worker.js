@@ -98,7 +98,7 @@ export default {
     let decoded=path;
     try {for(let i=0;i<3;i++)decoded=decodeURIComponent(decoded);}catch{return reply({error:'Invalid URL.'},400);}
     if(decoded.includes('\\')||decoded.split('/').some(p=>p==='.'||p==='..'))return reply({error:'Invalid path.'},403);
-    if(path==='/healthz'||path==='/__deployment_health')return reply({ready:true,display_ready:true,hosting:'cloud-static',language:LANGUAGE,genes:12,samples:291,groups:72,prediction_hosting:'external-origin'});
+    if(path==='/healthz'||path==='/__deployment_health')return reply({ready:true,display_ready:true,hosting:'cloud-static',language:LANGUAGE,genes:12,samples:284,groups:71,release:"HH_final_20261026",prediction_hosting:'external-origin'});
     const original=path.startsWith('/downloads')||path.startsWith('/atlas-assets/')||path.startsWith('/anatomy-assets/');
     if(original) {
       if(!request.headers.has('Authorization'))return reply({error:'Original downloads require a separate password.'},401,{'WWW-Authenticate':'Basic realm="Atlas original downloads", charset="UTF-8"'});
@@ -108,6 +108,12 @@ export default {
     if(path in API_FILES && ['GET','HEAD'].includes(request.method))return asset(request,env,API_FILES[path]);
     const preview=await previewEntry(path,request,env);
     if(preview && ['GET','HEAD'].includes(request.method)) {
+      if (!Array.isArray(preview)) {
+        if (!/^\/preview-files\/[a-f0-9]{40}\.png$/.test(preview.asset||''))return reply({error:'Invalid preview entry.'},500);
+        const response=await asset(request,env,preview.asset);
+        const headers=new Headers(response.headers);headers.set('X-Atlas-Asset','display-preview');headers.set('Cache-Control','public, max-age=86400');
+        return new Response(response.body,{status:response.status,headers});
+      }
       const [pack,start,length]=preview;
       const target=new URL('/packs/'+pack,url.origin);
       const response=await env.ASSETS.fetch(new Request(target,{headers:{Range:`bytes=${start}-${start+length-1}`}}));

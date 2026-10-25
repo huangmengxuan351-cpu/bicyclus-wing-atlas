@@ -47,6 +47,8 @@ def catalog(root, dataset='main'):
     metrics = {(r['group'], r['variant']): r for r in rows(root/'metrics.csv')}
     members = rows(root/'accepted_manifest.csv')
     intensity = {r['id']: r for r in rows(root/'intensity_source_archive.csv')}
+    override_path = root/'release_overrides.json'
+    overrides = json.loads(override_path.read_text(encoding='utf-8')) if override_path.is_file() else {}
     groups = []
     for info in rows(root/'group_provenance.csv'):
         group = info['group']
@@ -80,12 +82,13 @@ def catalog(root, dataset='main'):
                 intensity=url(src['archived']), stage=src['processing_stage'],
                 tre=float(r['mean_tre_px_2048']) if r.get('mean_tre_px_2048') else None,
                 method=r.get('actual_method') or r.get('method', 'Historical B/C')))
+        item.update(overrides.get('groups', {}).get(group, {}))
         groups.append(item)
     return dict(version='stage_atlas_portal_v2', genes=summary['genes'], groups=groups,
         samples=summary['samples'], group_count=len(groups), variant_count=summary['variants'],
         variants=list(VARIANTS), report=url('REPORT_ZH.md'), experiments=url('EXPERIMENTS_ZH.md'),
         manifest=url('accepted_manifest.csv'), coverage=url('gene_group_coverage.csv'),
-        validated=True, units='relative fluorescence, not molecular counts')
+        withdrawn_groups=overrides.get('withdrawn_groups', {}), validated=True, units='relative fluorescence, not molecular counts')
 
 
 class App:
@@ -137,6 +140,8 @@ class App:
                 anatomy.append(dict(case, assets={key: '/anatomy-assets/'+quote(value, safe='/')
                     for key, value in case['assets'].items()},
                     rendering_comparison='/anatomy-assets/'+case['path']+'/rendering_comparison.png'))
+        payload['withdrawn_groups'] = {k:v for part in loaded for k,v in part.get('withdrawn_groups', {}).items()}
+        payload['release'] = 'HH_final_20261026'
         payload['anatomy_cases'] = anatomy
         payload['anatomy_validated'] = len(anatomy) == 6
         payload['display_comparison_url'] = '/anatomy-assets/display_comparison.html'

@@ -128,11 +128,12 @@ async function makeAnatomyTile(wing,stage,title,token,preset=null){
 }
 function geneEvidence(group){
   $("methodHelp").textContent=tips[state.variant];$("metrics").replaceChildren();$("downloads").replaceChildren();
-  if(!group){$("facts").innerHTML=`<dt>基因</dt><dd>${esc(state.gene)}</dd><dt>已提取表达</dt><dd>尚无可用结果</dd>`;$("reviewStatus").textContent="该组合尚无表达结果，不使用替代数据。";$("statusBadge").textContent="等待表达结果";$("fullComparison").hidden=true;return;}
+  if(!group){$("facts").innerHTML=`<dt>基因</dt><dd>${esc(state.gene)}</dd><dt>已提取表达</dt><dd>尚无可用结果</dd>`;$("reviewStatus").textContent="该组合尚无表达结果，不使用替代数据。";$("statusBadge").textContent="等待表达结果";$("fullComparison").hidden=true;const withdrawn=data.withdrawn_groups?.[`${state.gene}__${state.wing}__stage_${state.stage.replace(".","_")}`];if(withdrawn){$("reviewStatus").textContent=withdrawn.reason_zh;$("statusBadge").textContent="已撤下：分期冲突";}return;}
   const facts={"当前查看基因":group.gene+(anatomical&&!$("showGenes").checked?" / 当前未显示":""),"来源图像数量":`${group.n}${group.n===1?" / 单图代表性结果":""}`,"翅型 / 阶段":`${labelWing(group.wing)} / ${group.stage}`,"科研参考网格":"2048 x 2048","当前基因处理协议":group.protocol};
   $("facts").innerHTML=Object.entries(facts).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
   $("reviewStatus").textContent=group.origin==="legacy"?"历史来源图像质量已接受，配准仍保留实验性状态。":"来源图像可用性已接受；当前安全配准候选仍需方法层面的人工确认。";
   $("statusBadge").textContent="配准仍需确认";
+  if(group.selection_status==="user_selected_final_composite"){$("reviewStatus").textContent="用户已审核选定最终复合图谱；独立关键点验证状态单独保留。";$("statusBadge").textContent="已选定最终图谱";}
   const v=group.variants[state.variant],m=v.metrics;
   $("metrics").innerHTML=Object.entries({"强信号保留率":pct(m.strong_retention),"弱信号保留率":pct(m.weak_retention),"参考区外信号比例":pct(m.outside_reference_fraction),"标准翅区覆盖率":pct(m.target_coverage_fraction)}).map(([k,value])=>`<dt>${k}</dt><dd>${value}</dd>`).join("");
   const links={"表达热图（PNG）":v.images.heatmap,"透明表达图层（PNG）":v.images.expression_layer,"强度点位图（PNG）":v.images.points_layer,"16位强度图（PNG）":v.images.intensity_16bit,"浮点表达（NPY）":v.files["expression_float.npy"],"覆盖数（NPY）":v.files["coverage_count.npy"],"样本间标准差（NPY）":v.files["between_sample_sd.npy"],"缺测标记（NPY）":v.files["missing_support.npy"],"参考区外冲突（NPY）":v.files["outside_reference_conflict.npy"],"点位坐标（NPZ）":v.files["points.npz"]};
@@ -194,7 +195,7 @@ function render(){
     else makeAnatomyTile(state.wing,state.stage,"标准DAPI / 翅脉 / 基因表达",token);
   }else{
     $("legend").hidden=state.mode==="sources";$("legend").querySelector("i").style.background=state.representation==="points"?"linear-gradient(90deg,#47bdff,#ffae36,#fff187)":"";
-    $("legend").querySelector("span").textContent=state.representation==="points"?"基线P50 / P85点位等级":"相对表达 / 0–1";
+    $("legend").querySelector("span").textContent=state.representation==="points"?(group?.point_display?.sampling==="area_uniform"?"等面积采点 / P40、P50 / 蓝橘黄":"基线P50 / P85点位等级"):"相对表达 / 0–1";
     $("modeNote").textContent="仅显示表达，不叠加DAPI或翅脉；缩放与平移同步。";
     notice(!group?"该组合尚无表达结果，不生成替代信号。":group.n===1?"当前为单图代表性结果，不代表群体共识。":state.mode==="stages"||state.mode==="wings"?"用于比较空间分布，不用于比较绝对mRNA数量；不同ROI增益和批次存在差异。":"");
     if(state.mode==="sources"&&group)sources(group);
