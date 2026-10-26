@@ -9520,11 +9520,150 @@
       },
       "independent_registration_validation": false,
       "dataset": "main"
+    },
+    {
+      "id": "hh__forewing__stage_1_0",
+      "gene": "hh",
+      "wing": "forewing",
+      "stage": "1.0",
+      "n": 4,
+      "origin": "legacy",
+      "status": "legacy_quality_accepted_registration_experimental",
+      "protocol": "legacy_SOP_BC_size_normalization_uint8_replay",
+      "coordinate_frame": "038f82ca52a73d43c014144db02a8c2ae0f711462379a40e310cb3339b7a2a1348e30d2bc64676746be7d2bef2d9e081f1225a3ee0b5c4f49a5b447e692a8313",
+      "dapi": "/preview/3b1b33998f62c76776b95d9eefb4b09d6ac07b02.png",
+      "mask": "/preview/5dfdd224a332cf8360d1ee79451e3ba41358807c.png",
+      "comparison": "/preview/0aaf0f32d8a23044994ad0be1ab54dad71768823.png",
+      "variants": {
+        "baseline": {
+          "images": {
+            "heatmap": "/preview/29f398705ea483897649ce715478a2c584cd1b0b.png",
+            "heatmap_dapi": "/preview/c0e91aafe4a99d65c88c5df91e5363c8c9a5bcb5.png",
+            "heatmap_unclipped": "/preview/4be1077152bacbd0c22bc9b7dec0dd5176e332ec.png",
+            "expression_layer": "/preview/ed9af647aed1029376f97416eb2bbc00d9586f12.png",
+            "points_layer": "/preview/c33c08d27d8741b1e67da47a4c5eed9888fdf2be.png",
+            "points_dapi": "/preview/bba8c781a628e4794bf1f1d692f0da767a9337ef.png",
+            "intensity_gray": "/preview/f7c8060fbede432c3f667e0e22e644ccc4301b8e.png",
+            "intensity_16bit": "/downloads/authorization-required"
+          },
+          "files": {
+            "expression_float.npy": "/downloads/authorization-required",
+            "between_sample_sd.npy": "/downloads/authorization-required",
+            "coverage_count.npy": "/downloads/authorization-required",
+            "missing_support.npy": "/downloads/authorization-required",
+            "outside_reference_conflict.npy": "/downloads/authorization-required",
+            "points.npz": "/downloads/authorization-required"
+          },
+          "metrics": {
+            "strong_retention": 1.0,
+            "weak_retention": 1.0,
+            "outside_reference_fraction": 0.052895624190568924,
+            "target_coverage_fraction": 0.9982789641340255
+          }
+        },
+        "early_soft_q20": {
+          "images": {
+            "heatmap": "/preview/58d21a3b77f31aef3bc19b7d0413242ef63b9519.png",
+            "heatmap_dapi": "/preview/aba5fd5248044f7c72d373d487875eab89f3b6ba.png",
+            "heatmap_unclipped": "/preview/70023773766f7a51a4bc565df4a68126f9bf8fa4.png",
+            "expression_layer": "/preview/7d3d98c44399e1598317fc66c9dd1795b420b785.png",
+            "points_layer": "/preview/b7656cbe34a041fcd54c6d789afc8ae5e0e8d65c.png",
+            "points_dapi": "/preview/f9cc3362934b3c3cbb3c4430ca5e22e1b6e05567.png",
+            "intensity_gray": "/preview/030794a45ca5f804c3e8e35f9f0446d021f287ef.png",
+            "intensity_16bit": "/downloads/authorization-required"
+          },
+          "files": {
+            "expression_float.npy": "/downloads/authorization-required",
+            "between_sample_sd.npy": "/downloads/authorization-required",
+            "coverage_count.npy": "/downloads/authorization-required",
+            "missing_support.npy": "/downloads/authorization-required",
+            "outside_reference_conflict.npy": "/downloads/authorization-required",
+            "points.npz": "/downloads/authorization-required"
+          },
+          "metrics": {
+            "strong_retention": 0.9031485915184021,
+            "weak_retention": 0.4140636622905731,
+            "outside_reference_fraction": 0.01909649185836315,
+            "target_coverage_fraction": 0.9982789641340255
+          }
+        },
+        "bilateral_soft_q20": {
+          "images": {
+            "heatmap": "/preview/bb14b02829304709af84acab8e606f06964c74fa.png",
+            "heatmap_dapi": "/preview/33f00f2c82fa614398086cbdf5115c61a56bc1fb.png",
+            "heatmap_unclipped": "/preview/cee862579cac356ef0955d16ade7e42d9cf78ea3.png",
+            "expression_layer": "/preview/09eda835fbfffc24455bea10056e24f34a23aa09.png",
+            "points_layer": "/preview/af7a8a15bb0f4da5b9a914da1b54d5ab0a7f6dbf.png",
+            "points_dapi": "/preview/6874f391158fb78809bdd15fddbdf68db478a919.png",
+            "intensity_gray": "/preview/3d373f6a01da1e7200019698f5c1f7dc9d3c6c5b.png",
+            "intensity_16bit": "/downloads/authorization-required"
+          },
+          "files": {
+            "expression_float.npy": "/downloads/authorization-required",
+            "between_sample_sd.npy": "/downloads/authorization-required",
+            "coverage_count.npy": "/downloads/authorization-required",
+            "missing_support.npy": "/downloads/authorization-required",
+            "outside_reference_conflict.npy": "/downloads/authorization-required",
+            "points.npz": "/downloads/authorization-required"
+          },
+          "metrics": {
+            "strong_retention": 0.9020294547080994,
+            "weak_retention": 0.4136196970939636,
+            "outside_reference_fraction": 0.01904095709323883,
+            "target_coverage_fraction": 0.9982789641340255
+          }
+        }
+      },
+      "sources": [
+        {
+          "id": "791adb6a0fafae9f972e",
+          "label": "cib1_bls_b2_hhb3_7_488hcr.png",
+          "aligned": "/preview/8eed2d95e91dab055d6561fa1b22f53b9b8edc8d.png",
+          "intensity": "/preview/05cb23d5c759e5a2707c15950bdbdb99dbd6b4d1.png",
+          "stage": "pre_historical_alignment_export",
+          "tre": null,
+          "method": "C_limited_bspline"
+        },
+        {
+          "id": "542556f8105b1874bf11",
+          "label": "dppb1_optixb2_ombb3_hhb4_1_4_514hcr.png",
+          "aligned": "/preview/cc75fb06271326b0a95b926849c4948107ea7511.png",
+          "intensity": "/preview/221bb642d20bb156b963a0049bae44475ea002cf.png",
+          "stage": "pre_historical_alignment_export",
+          "tre": null,
+          "method": "C_limited_bspline"
+        },
+        {
+          "id": "6727f4ddd562032b7fc5",
+          "label": "hhb3_3_488hcr.png",
+          "aligned": "/preview/9891248db40bc70f8cfb49d4efc8b41529df7cea.png",
+          "intensity": "/preview/f7ae8f6e4331b30eea07b14e61fd1e76fa221a4c.png",
+          "stage": "pre_historical_alignment_export",
+          "tre": null,
+          "method": "B_robust_affine"
+        },
+        {
+          "id": "3204f827b7da06dd2e3c",
+          "label": "hhb3_8_488hcr.png",
+          "aligned": "/preview/d5bf7c8709496fa88082b7949b8a289d2189b06f.png",
+          "intensity": "/preview/fe2f35f27a4787a8c17e3c1adbb3d392c2a4eaf6.png",
+          "stage": "pre_historical_alignment_export",
+          "tre": null,
+          "method": "B_robust_affine"
+        }
+      ],
+      "dataset": "main",
+      "release": "HH_restore_stage10_20261026",
+      "selection_status": "legacy_retained_by_user",
+      "legacy_reference": true,
+      "review_note_en": "Historical stage 1.0 atlas retained as requested; stage provenance remains available for review.",
+      "review_note_zh": "按要求沿用历史1.0图谱；原始分期来源记录保留供复核。",
+      "independent_registration_validation": false
     }
   ],
-  "samples": 284,
-  "group_count": 71,
-  "variant_count": 213,
+  "samples": 288,
+  "group_count": 72,
+  "variant_count": 216,
   "variants": [
     "baseline",
     "early_soft_q20",
@@ -9715,8 +9854,8 @@
       "gene": "hh",
       "wing": "forewing",
       "stage": "1.0",
-      "available": false,
-      "n": 0,
+      "available": true,
+      "n": 4,
       "id": "hh__forewing__stage_1_0"
     },
     {
@@ -10285,13 +10424,6 @@
       2048
     ]
   },
-  "withdrawn_groups": {
-    "hh__forewing__stage_1_0": {
-      "reason": "stage_assignment_conflict",
-      "reason_en": "Stage assignment conflict; awaiting reconstruction. Historical archive retained.",
-      "reason_zh": "分期冲突，等待重建；旧结果保留于历史档案。",
-      "status": "withdrawn_pending_reconstruction"
-    }
-  },
-  "release": "HH_final_20261026"
+  "withdrawn_groups": {},
+  "release": "HH_restore_stage10_20261026"
 }

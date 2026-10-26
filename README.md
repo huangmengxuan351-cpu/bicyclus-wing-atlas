@@ -4,7 +4,7 @@
 
 [**Project entry**](https://bicycluswingatlas.pages.dev/) · [**Open the English site**](https://bicyclus-wing-atlas-en.pages.dev/) · [**打开中文版**](https://bicyclus-wing-atlas-zh.pages.dev/) · [**English user manual**](https://bicyclus-wing-atlas-en.pages.dev/manual/) · [**中文使用手册**](https://bicyclus-wing-atlas-zh.pages.dev/manual/) · [Deployment guide (中文)](deploy/DEPLOYMENT_ZH.md)
 
-The atlas brings together 284 registered fluorescence images covering 12 genes, two wing families (forewing and hindwing) and three developmental stages (0.5, 0.75 and 1.0). The stage numbers label successive stages of wing development, using existing fluorescence images of fixed wings, with DAPI providing the nuclear reference channel. The project covers computational analysis and platform construction. Each gene, wing and stage combination has been summarized onto a shared 2048 × 2048 reference wing, so patterns can be compared side by side and laid over a standard DAPI image with its confirmed vein layer. You do not need an account to browse the atlas or to run a prediction. Only the original full-resolution images and numerical arrays are behind a download password.
+The atlas brings together 288 registered fluorescence images covering 12 genes, two wing families (forewing and hindwing) and three developmental stages (0.5, 0.75 and 1.0). The stage numbers label successive stages of wing development, using existing fluorescence images of fixed wings, with DAPI providing the nuclear reference channel. The project covers computational analysis and platform construction. Each gene, wing and stage combination has been summarized onto a shared 2048 × 2048 reference wing, so patterns can be compared side by side and laid over a standard DAPI image with its confirmed vein layer. You do not need an account to browse the atlas or to run a prediction. Only the original full-resolution images and numerical arrays are behind a download password.
 
 ---
 
@@ -24,7 +24,7 @@ For a guided walkthrough with interactive examples (a practice alignment, a deci
 
 ## What is in the atlas
 
-The released dataset contains 12 genes, 284 source images, 71 available atlas groups across 72 possible combinations (12 genes × 2 wings × 3 stages), 213 expression representations (each group processed three ways) and six anatomical references (one per wing and stage). The *hth* dataset has been deliberately excluded from this release.
+The released dataset contains 12 genes, 288 source images, 72 available atlas groups across 72 possible combinations (12 genes × 2 wings × 3 stages), 216 expression representations (each group processed three ways) and six anatomical references (one per wing and stage). The *hth* dataset has been deliberately excluded from this release.
 
 The number of source images behind each group is shown below. Groups with only one image are flagged in the interface as single-sample maps rather than population averages.
 
@@ -33,7 +33,7 @@ The number of source images behind each group is shown below. Groups with only o
 | *dll* | 1 | 10 | 4 | 6 | 9 | 11 | 41 |
 | *dpp* | 2 | 4 | 5 | 2 | 1 | 4 | 18 |
 | *fz9* | 5 | 5 | 5 | 7 | 5 | 5 | 32 |
-| *hh* | 2 | 2 | withdrawn | 4 | 4 | 1 | 13 |
+| *hh* | 2 | 2 | 4 | 4 | 4 | 1 | 17 |
 | *mad6* | 3 | 4 | 3 | 2 | 4 | 1 | 17 |
 | *omb* | 4 | 7 | 15 | 11 | 7 | 20 | 64 |
 | *optix* | 2 | 2 | 2 | 2 | 3 | 2 | 13 |
@@ -42,7 +42,7 @@ The number of source images behind each group is shown below. Groups with only o
 | *vg* | 1 | 3 | 2 | 1 | 1 | 3 | 11 |
 | *wg* | 2 | 3 | 2 | 3 | 2 | 1 | 13 |
 | *wnt10* | 1 | 2 | 6 | 2 | 3 | 3 | 17 |
-| **All genes** | **26** | **48** | **55** | **43** | **50** | **62** | **284** |
+| **All genes** | **26** | **48** | **59** | **43** | **50** | **62** | **288** |
 
 *FW = forewing, HW = hindwing. Counts come from `public/en/data/catalog.json`.*
 
@@ -193,4 +193,9 @@ Project-authored software and project documentation are released under the [MIT 
 
 ## HH final revision · 26 October 2026
 
-Forewing HH 0.5 uses HHB3_1 + HHB3_2; forewing HH 0.75 uses HHB3_8 + HHB4_3_1 (G3, alpha=1). The reviewed continuous fields are preserved exactly. The 0.75 point view uses area-uniform sampling with fixed P40/P50 blue/orange/yellow display tiers; point counts represent sampled area. Other point views retain their documented sampling. Forewing HH 1.0 is withdrawn because of a stage assignment conflict, with historical records retained. The current atlas contains 284 image units, 71 groups and 213 processing outputs.
+Forewing HH 0.5 uses HHB3_1 + HHB3_2; forewing HH 0.75 uses HHB3_8 + HHB4_3_1 (G3, alpha=1). The reviewed continuous fields are preserved exactly. The 0.75 point view uses area-uniform sampling with fixed P40/P50 blue/orange/yellow display tiers; point counts represent sampled area. Other point views retain their documented sampling. Forewing HH 1.0 has been restored at the user’s latest request, using the original historical atlas unchanged. The current atlas contains 288 image units, 72 groups and 216 processing outputs.
+
+
+## Historical HH forewing 1.0 restored · 26 October 2026
+
+The user’s latest decision reinstates the original forewing HH 1.0 atlas, superseding its temporary withdrawal. Historical source membership and stage provenance remain available for review. Current counts: 288 image units, 72 groups and 216 processing outputs. Image units count group memberships; one source ID is reused between the selected stage 0.75 map and the retained historical 1.0 map and is not an additional independent specimen. Accepted forewing 0.5/0.75 and hindwing scientific outputs are unchanged.

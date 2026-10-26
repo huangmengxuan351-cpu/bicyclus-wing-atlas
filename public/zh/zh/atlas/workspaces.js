@@ -134,6 +134,7 @@ function geneEvidence(group){
   $("reviewStatus").textContent=group.origin==="legacy"?"历史来源图像质量已接受，配准仍保留实验性状态。":"来源图像可用性已接受；当前安全配准候选仍需方法层面的人工确认。";
   $("statusBadge").textContent="配准仍需确认";
   if(group.selection_status==="user_selected_final_composite"){$("reviewStatus").textContent="用户已审核选定最终复合图谱；独立关键点验证状态单独保留。";$("statusBadge").textContent="已选定最终图谱";}
+  if(group.selection_status==="legacy_retained_by_user"){$("reviewStatus").textContent=group.review_note_zh;$("statusBadge").textContent="历史1.0图谱";}
   const v=group.variants[state.variant],m=v.metrics;
   $("metrics").innerHTML=Object.entries({"强信号保留率":pct(m.strong_retention),"弱信号保留率":pct(m.weak_retention),"参考区外信号比例":pct(m.outside_reference_fraction),"标准翅区覆盖率":pct(m.target_coverage_fraction)}).map(([k,value])=>`<dt>${k}</dt><dd>${value}</dd>`).join("");
   const links={"表达热图（PNG）":v.images.heatmap,"透明表达图层（PNG）":v.images.expression_layer,"强度点位图（PNG）":v.images.points_layer,"16位强度图（PNG）":v.images.intensity_16bit,"浮点表达（NPY）":v.files["expression_float.npy"],"覆盖数（NPY）":v.files["coverage_count.npy"],"样本间标准差（NPY）":v.files["between_sample_sd.npy"],"缺测标记（NPY）":v.files["missing_support.npy"],"参考区外冲突（NPY）":v.files["outside_reference_conflict.npy"],"点位坐标（NPZ）":v.files["points.npz"]};

@@ -46,7 +46,7 @@ def catalog(root, dataset='main'):
         raise ValueError('The atlas archive has not passed integrity validation.')
     metrics = {(r['group'], r['variant']): r for r in rows(root/'metrics.csv')}
     members = rows(root/'accepted_manifest.csv')
-    intensity = {r['id']: r for r in rows(root/'intensity_source_archive.csv')}
+    intensity = {(r['group'], r['id']): r for r in rows(root/'intensity_source_archive.csv')}
     override_path = root/'release_overrides.json'
     overrides = json.loads(override_path.read_text(encoding='utf-8')) if override_path.is_file() else {}
     groups = []
@@ -76,7 +76,7 @@ def catalog(root, dataset='main'):
                 metrics={k: float(m[k]) for k in ('strong_retention', 'weak_retention',
                     'outside_reference_fraction', 'target_coverage_fraction')})
         for r in [r for r in members if r['group'] == group]:
-            src = intensity[r['id']]
+            src = intensity[(group, r['id'])]
             item['sources'].append(dict(id=r['id'], label=r['filename'],
                 aligned=url(f'{group}/inputs/{r["id"]}.png'),
                 intensity=url(src['archived']), stage=src['processing_stage'],
@@ -141,7 +141,7 @@ class App:
                     for key, value in case['assets'].items()},
                     rendering_comparison='/anatomy-assets/'+case['path']+'/rendering_comparison.png'))
         payload['withdrawn_groups'] = {k:v for part in loaded for k,v in part.get('withdrawn_groups', {}).items()}
-        payload['release'] = 'HH_final_20261026'
+        payload['release'] = 'HH_restore_stage10_20261026'
         payload['anatomy_cases'] = anatomy
         payload['anatomy_validated'] = len(anatomy) == 6
         payload['display_comparison_url'] = '/anatomy-assets/display_comparison.html'
