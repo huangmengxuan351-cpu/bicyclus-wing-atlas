@@ -4,7 +4,7 @@
 
 [**Project entry**](https://bicycluswingatlas.pages.dev/) · [**Open the English site**](https://bicyclus-wing-atlas-en.pages.dev/) · [**打开中文版**](https://bicyclus-wing-atlas-zh.pages.dev/) · [**English user manual**](https://bicyclus-wing-atlas-en.pages.dev/manual/) · [**中文使用手册**](https://bicyclus-wing-atlas-zh.pages.dev/manual/) · [Deployment guide (中文)](deploy/DEPLOYMENT_ZH.md)
 
-The atlas brings together 288 registered fluorescence images covering 12 genes, two wing families (forewing and hindwing) and three developmental stages (0.5, 0.75 and 1.0). The stage numbers label successive stages of wing development, using existing fluorescence images of fixed wings, with DAPI providing the nuclear reference channel. The project covers computational analysis and platform construction. Each gene, wing and stage combination has been summarized onto a shared 2048 × 2048 reference wing, so patterns can be compared side by side and laid over a standard DAPI image with its confirmed vein layer. You do not need an account to browse the atlas or to run a prediction. Only the original full-resolution images and numerical arrays are behind a download password.
+The atlas brings together 288 registered fluorescence image units covering 12 genes, two wing families (forewing and hindwing) and three developmental stages (0.5, 0.75 and 1.0). The stage numbers label successive stages of wing development, using existing fluorescence images of fixed wings, with DAPI providing the nuclear reference channel. The project covers computational analysis and platform construction. Each gene, wing and stage combination has been summarized onto a shared 2048 × 2048 reference wing, so patterns can be compared side by side and laid over a standard DAPI image with its confirmed vein layer. You do not need an account to browse the atlas or to run a prediction. Only the original full-resolution images and numerical arrays are behind a download password.
 
 ---
 
@@ -24,7 +24,7 @@ For a guided walkthrough with interactive examples (a practice alignment, a deci
 
 ## What is in the atlas
 
-The released dataset contains 12 genes, 288 source images, 72 available atlas groups across 72 possible combinations (12 genes × 2 wings × 3 stages), 216 expression representations (each group processed three ways) and six anatomical references (one per wing and stage). The *hth* dataset has been deliberately excluded from this release.
+The released dataset contains 12 genes, 288 source image units, 72 available atlas groups across 72 possible combinations (12 genes × 2 wings × 3 stages), 216 expression representations (each group processed three ways) and six anatomical references (one per wing and stage). The *hth* dataset has been deliberately excluded from this release.
 
 The number of source images behind each group is shown below. Groups with only one image are flagged in the interface as single-sample maps rather than population averages.
 
