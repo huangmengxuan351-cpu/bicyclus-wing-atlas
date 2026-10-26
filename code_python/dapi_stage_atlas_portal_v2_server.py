@@ -141,7 +141,7 @@ class App:
                     for key, value in case['assets'].items()},
                     rendering_comparison='/anatomy-assets/'+case['path']+'/rendering_comparison.png'))
         payload['withdrawn_groups'] = {k:v for part in loaded for k,v in part.get('withdrawn_groups', {}).items()}
-        payload['release'] = 'HH_restore_stage10_20261026'
+        payload['release'] = 'HH_hindwing_final_20261026'
         payload['anatomy_cases'] = anatomy
         payload['anatomy_validated'] = len(anatomy) == 6
         payload['display_comparison_url'] = '/anatomy-assets/display_comparison.html'

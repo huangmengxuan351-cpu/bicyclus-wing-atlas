@@ -7,7 +7,7 @@ for (const language of ['en','zh']) {
   const base=new URL(`../public/${language}/`,import.meta.url);
   const catalog=JSON.parse(await readFile(new URL('data/catalog.json',base),'utf8'));
   test(`${language}: final HH membership, withdrawal and totals agree`,()=>{
-    assert.deepEqual([catalog.samples,catalog.group_count,catalog.variant_count],[288,72,216]);
+    assert.deepEqual([catalog.samples,catalog.group_count,catalog.variant_count],[285,72,216]);
     const group=stage=>catalog.groups.find(g=>g.id===`hh__forewing__stage_${stage}`);
     assert.deepEqual(group('0_5').sources.map(s=>s.id).sort(),['7f4ca7b961b905233d62','99d2441a4ae7213dc9a6']);
     assert.deepEqual(group('0_75').sources.map(s=>s.id).sort(),['3204f827b7da06dd2e3c','b4798cb44433ef034bf7']);
@@ -18,6 +18,15 @@ for (const language of ['en','zh']) {
     assert.equal(group('0_75').point_display.sampling,'area_uniform');
     assert.deepEqual(group('0_75').point_display.threshold_percentiles,[40,50]);
     assert.equal(group('0_5').point_display.sampling,'intensity_proportional');
+    const hind=stage=>catalog.groups.find(g=>g.id===`hh__hindwing__stage_${stage}`);
+    assert.deepEqual(hind('0_5').sources.map(s=>s.id).sort(),['a00934e3c2aabeef0ef1','e96bc4d93e5bd4df65c8','3a156cd46a22910734cc'].sort());
+    assert.deepEqual(hind('0_75').sources.map(s=>s.id).sort(),['e97bb5c210c8a9842335','5e3c6940da0d810e8246'].sort());
+    for(const stage of ['0_5','0_75']) {
+      assert.equal(hind(stage).selection_status,'user_selected_final_composite');
+      assert.equal(hind(stage).point_display.sampling,'intensity_proportional');
+      assert.deepEqual(hind(stage).point_display.threshold_percentiles,[50,85]);
+      assert.equal(hind(stage).n,hind(stage).sources.length);
+    }
   });
   test(`${language}: updated previews are complete, content-addressed and served without the private origin`,async()=>{
     const index=JSON.parse(await readFile(new URL('data/preview-index.json',base),'utf8'));

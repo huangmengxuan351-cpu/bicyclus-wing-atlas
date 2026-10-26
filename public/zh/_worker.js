@@ -98,7 +98,7 @@ export default {
     let decoded=path;
     try {for(let i=0;i<3;i++)decoded=decodeURIComponent(decoded);}catch{return reply({error:'Invalid URL.'},400);}
     if(decoded.includes('\\')||decoded.split('/').some(p=>p==='.'||p==='..'))return reply({error:'Invalid path.'},403);
-    if(path==='/healthz'||path==='/__deployment_health')return reply({ready:true,display_ready:true,hosting:'cloud-static',language:LANGUAGE,genes:12,samples:288,groups:72,release:"HH_restore_stage10_20261026",prediction_hosting:'external-origin'});
+    if(path==='/healthz'||path==='/__deployment_health')return reply({ready:true,display_ready:true,hosting:'cloud-static',language:LANGUAGE,genes:12,samples:285,groups:72,release:"HH_hindwing_final_20261026",prediction_hosting:'external-origin'});
     const original=path.startsWith('/downloads')||path.startsWith('/atlas-assets/')||path.startsWith('/anatomy-assets/');
     if(original) {
       if(!request.headers.has('Authorization'))return reply({error:'Original downloads require a separate password.'},401,{'WWW-Authenticate':'Basic realm="Atlas original downloads", charset="UTF-8"'});
