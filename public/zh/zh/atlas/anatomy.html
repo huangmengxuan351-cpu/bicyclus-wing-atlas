@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Standard Anatomy &amp; Expression Layers</title><link rel="stylesheet" href="/zh/atlas/styles.css?v=20261022-processing"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Standard Anatomy &amp; Expression Layers</title><link rel="stylesheet" href="/zh/atlas/styles.css?v=provisional-atlases-20261114"></head>
 <body data-workspace="anatomy">
   <nav class="topbar"><a class="brand" href="/zh/">翅盘 <i>图谱</i><small>解剖图层工作区 / V2</small></a><div><a id="workspaceSwitch" href="/zh/atlas/">基因表达</a><a class="current-page" href="/zh/anatomy/">解剖与多基因图层</a><a href="/zh/predict/">翅型预测</a><button id="copyLink">复制当前视图链接</button></div></nav>
   <main class="shell">
@@ -39,7 +39,9 @@
       <header class="workspace-heading"><div><span class="eyebrow">02 / 解剖与表达</span><h2 id="viewTitle">正在加载标准翅盘</h2><p id="viewSubtitle"></p></div><span id="statusBadge" class="badge">最终翅脉图层</span></header>
       <div class="mode-tabs" aria-label="比较布局"><button data-mode="single">图层工作区</button><button data-mode="styles">显示样式比较</button><button data-mode="stages">跨阶段比较</button><button data-mode="wings">前后翅比较</button></div>
       <div class="toolbar"><div><button id="zoomOut" aria-label="缩小">-</button><output id="zoomValue">100%</output><button id="zoomIn" aria-label="放大">+</button><button id="fit">适应窗口</button><button id="fullscreen">全屏</button></div><span>拖动平移 · 滚轮缩放 · 视图同步</span></div>
-      <div id="notice" class="notice" role="status" hidden></div><div id="tiles" class="tiles single" aria-live="polite"></div>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <p id="sourceScope" class="notice source-scope-notice" role="status" hidden></p>
+      <div id="tiles" class="tiles single" aria-live="polite"></div>
       <div class="legend" id="legend"><span>独立图层颜色</span><div id="anatomyLegend" class="gene-legend"></div><small>混色仅用于定性比较，不证明细胞共表达或绝对表达量。</small></div>
       <footer class="workspace-foot"><span id="modeNote">最终选定翅脉的几何形状保持不变。</span><a id="fullComparison" href="#" target="_blank" rel="noopener">最终翅脉与DAPI叠加</a></footer>
     </section>
@@ -51,5 +53,5 @@
       <details open><summary>下载解剖结构</summary><div id="anatomyDownloads" class="download-list"></div></details>
       <div class="report-links"><a href="/anatomy-assets/display_comparison.html" target="_blank" rel="noopener">六组翅盘显示比较</a><a href="/atlas-assets/main/index.html" target="_blank" rel="noopener">完整归档图库</a><a id="reportLink" target="_blank" rel="noopener">当前基因报告</a><a id="experimentLink" target="_blank" rel="noopener">历史分析记录</a><a id="manifestLink">样本元数据（CSV）</a></div>
     </aside>
-  </main><script src="/zh/atlas/workspaces.js?v=hh-hw-final-20261026"></script>
+  </main><script src="/zh/atlas/workspaces.js?v=provisional-atlases-20261114"></script>
 <script src="/zh/access-display.js?v=20261025"></script></body></html>

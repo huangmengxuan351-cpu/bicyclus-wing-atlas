@@ -33,7 +33,27 @@ const colorFor = g=>geneColors[g]||palette[g]||"#a4c4d9";
 const findGroup = (w=state.wing,s=state.stage,g=state.gene)=>data.groups.find(i=>i.gene===g&&i.wing===w&&i.stage===s);
 const findAnatomy = (w=state.wing,s=state.stage)=>data.anatomy_cases.find(i=>i.wing===w&&i.stage===s);
 const notice = text=>{ $("notice").textContent=text;$("notice").hidden=!text; };
+const isProvisional = group => group?.n===1 || group?.n===2;
+const provisionalLabel = "暂定";
+const stageValues = ["0.5","0.75","1.0"];
+const wingValues = ["forewing","hindwing"];
 if(query.get("embedded")==="1")document.body.classList.add("embedded");
+
+function showSourceScope(){
+  const wings=state.mode==="wings"?wingValues:[state.wing];
+  const stages=state.mode==="stages"?stageValues:[state.stage];
+  const genes=anatomical?($("showGenes").checked?selectedGenes:[]):[state.gene];
+  const groups=wings.flatMap(wing=>stages.flatMap(stage=>genes.map(gene=>findGroup(wing,stage,gene))));
+  const provisional=groups.filter(isProvisional);
+  const message=$("sourceScope");
+  message.hidden=provisional.length===0;
+  if(!provisional.length){message.textContent="";return;}
+  const [group]=provisional;
+  const sampleDetail=group.n===1?"一张配准后的来源图像":"两张来源图像";
+  message.textContent=provisional.length===1
+    ? `暂定图谱：${group.gene}，${labelWing(group.wing)}，阶段 ${group.stage}。该图谱基于${sampleDetail}。需有更多来源图像才能判断这一表达模式是否反复出现。`
+    : "标为「暂定」的图谱仅有一张或两张来源图像。需有更多来源图像才能判断这些表达模式是否反复出现。";
+}
 
 function boundedCache(cache,key,value,limit){cache.delete(key);cache.set(key,value);while(cache.size>limit)cache.delete(cache.keys().next().value);return value;}
 function loadImage(url){
@@ -95,13 +115,14 @@ function bindViewport(tile){
   tile.viewport.addEventListener("wheel",e=>{e.preventDefault();setZoom(state.zoom*Math.exp(-e.deltaY*.001));},{passive:false});
   tile.viewport.ondblclick=()=>{state.zoom=1;state.x=state.y=0;redraw();};
 }
-function tileElement(title,note,count=""){
+function tileElement(title,note,count="",scopeLabel=""){
   const el=document.createElement("article");el.className="tile";
-  el.innerHTML=`<header class="tile-header"><strong>${esc(title)}</strong><small>${esc(count)}</small></header><div class="viewport"><canvas aria-label="${esc(title)}"></canvas><span class="loading-label">Loading layers...</span></div><div class="tile-note">${esc(note)}</div>`;
+  const scope=scopeLabel?`<small class="source-scope-badge">${esc(scopeLabel)}</small>`:"";
+  el.innerHTML=`<header class="tile-header"><strong>${esc(title)}</strong><small>${esc(count)}</small>${scope}</header><div class="viewport"><canvas aria-label="${esc(title)}"></canvas><span class="loading-label">Loading layers...</span></div><div class="tile-note">${esc(note)}</div>`;
   $("tiles").append(el);return el;
 }
 function makeExpressionTile(group,variant,title,token){
-  const el=tileElement(title,group?`${labelWing(group.wing)} / ${group.stage} / ${names[variant]}`:"缺测数据不进行推断补齐。",group?`n = ${group.n}`:"暂无数据");
+  const el=tileElement(title,group?`${labelWing(group.wing)} / ${group.stage} / ${names[variant]}`:"缺测数据不进行推断补齐。",group?`n = ${group.n}`:"暂无数据",isProvisional(group)?provisionalLabel:"");
   if(!group){el.querySelector(".loading-label").textContent="该组合没有已接受的来源图像";return;}
   const tile={canvas:el.querySelector("canvas"),viewport:el.querySelector(".viewport"),loaded:false};tiles.push(tile);bindViewport(tile);
   const url=group.variants[variant].images[state.representation==="points"?"points_layer":"heatmap"];
@@ -110,7 +131,9 @@ function makeExpressionTile(group,variant,title,token){
 async function makeAnatomyTile(wing,stage,title,token,preset=null){
   const anatomy=findAnatomy(wing,stage);
   const candidates=$("showGenes").checked?selectedGenes.map(g=>findGroup(wing,stage,g)).filter(Boolean):[];
-  const el=tileElement(title,`${labelWing(wing)} / ${stage} / ${candidates.map(g=>`${g.gene}: n=${g.n}`).join(" / ")||"仅DAPI与翅脉"}`,anatomy?`${anatomy.branch_count} 条分支`:"暂无结构参照");
+  const provisionalLayers=candidates.filter(isProvisional).map(g=>`${g.gene} (n=${g.n})`);
+  const scope=provisionalLayers.length?`${provisionalLabel}：${provisionalLayers.join("、")}`:"";
+  const el=tileElement(title,`${labelWing(wing)} / ${stage} / ${candidates.map(g=>`${g.gene}: n=${g.n}`).join(" / ")||"仅DAPI与翅脉"}`,anatomy?`${anatomy.branch_count} 条分支`:"暂无结构参照",scope);
   if(!anatomy){el.querySelector(".loading-label").textContent="没有通过完整性验证的结构数据";return;}
   if(candidates.some(g=>g.coordinate_frame!==anatomy.coordinate_frame)){
     el.querySelector(".loading-label").textContent="已阻止叠加：参考坐标不一致";
@@ -129,7 +152,7 @@ async function makeAnatomyTile(wing,stage,title,token,preset=null){
 function geneEvidence(group){
   $("methodHelp").textContent=tips[state.variant];$("metrics").replaceChildren();$("downloads").replaceChildren();
   if(!group){$("facts").innerHTML=`<dt>基因</dt><dd>${esc(state.gene)}</dd><dt>已提取表达</dt><dd>尚无可用结果</dd>`;$("reviewStatus").textContent="该组合尚无表达结果，不使用替代数据。";$("statusBadge").textContent="等待表达结果";$("fullComparison").hidden=true;const withdrawn=data.withdrawn_groups?.[`${state.gene}__${state.wing}__stage_${state.stage.replace(".","_")}`];if(withdrawn){$("reviewStatus").textContent=withdrawn.reason_zh;$("statusBadge").textContent="已撤下：分期冲突";}return;}
-  const facts={"当前查看基因":group.gene+(anatomical&&!$("showGenes").checked?" / 当前未显示":""),"来源图像数量":`${group.n}${group.n===1?" / 单图代表性结果":""}`,"翅型 / 阶段":`${labelWing(group.wing)} / ${group.stage}`,"科研参考网格":"2048 x 2048","当前基因处理协议":group.protocol};
+  const facts={"当前查看基因":group.gene+(anatomical&&!$("showGenes").checked?" / 当前未显示":""),"来源图像数量":`${group.n}${isProvisional(group)?` / ${provisionalLabel}`:""}`,"翅型 / 阶段":`${labelWing(group.wing)} / ${group.stage}`,"科研参考网格":"2048 x 2048","当前基因处理协议":group.protocol};
   $("facts").innerHTML=Object.entries(facts).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
   $("reviewStatus").textContent=group.origin==="legacy"?"历史来源图像质量已接受，配准仍保留实验性状态。":"来源图像可用性已接受；当前安全配准候选仍需方法层面的人工确认。";
   $("statusBadge").textContent="配准仍需确认";
@@ -158,6 +181,11 @@ function geneControls(){
     const group=findGroup(state.wing,state.stage,gene),a=findAnatomy(),compatible=!!group&&a?.coordinate_frame===group.coordinate_frame;
     const row=document.createElement("div");row.className="gene-control";
     row.innerHTML=`<label class="check"><input type="checkbox" ${selectedGenes.includes(gene)?"checked":""} ${compatible?"":"disabled"}><span>${esc(gene)}</span><small>${group?`n=${group.n}${compatible?"":" / 坐标不同"}`:"暂无数据"}</small></label><div><input aria-label="${esc(gene)} 颜色" type="color" value="${colorFor(gene)}" ${compatible?"":"disabled"}><input aria-label="${esc(gene)} 透明度" type="range" min="0" max="1" step="0.05" value="${geneOpacity[gene]??.9}" ${compatible?"":"disabled"}></div>`;
+    if(isProvisional(group)){
+      const count=row.querySelector("small");
+      count.classList.add("source-scope-badge");
+      count.textContent+=` · ${provisionalLabel}`;
+    }
     row.querySelector("input[type=checkbox]").onchange=e=>{
       if(e.target.checked&&selectedGenes.length>=4){e.target.checked=false;notice("为保持可读性，最多叠加四个基因。");return;}
       selectedGenes=e.target.checked?[...selectedGenes,gene]:selectedGenes.filter(g=>g!==gene);if(e.target.checked)$("showGenes").checked=true;render();
@@ -180,9 +208,14 @@ function render(){
   if(!data)return;
   const token=++generation;tiles=[];$("tiles").replaceChildren();$("tiles").className=`tiles ${state.mode==="styles"?"methods":state.mode}`;
   $("gene").value=state.gene;$("variant").value=state.variant;$("representation").value=state.representation;$("variant").disabled=state.mode==="methods";
+  for(const option of $("gene").options){
+    const gene=option.value;
+    const candidate=findGroup(state.wing,state.stage,gene);
+    option.textContent=gene+(isProvisional(candidate)?` · ${provisionalLabel} (n=${candidate.n})`:data.processed_genes.includes(gene)?"":" / 等待数据");
+  }
   $("processingLabel").textContent=state.mode==="methods"?"三种处理结果比较":names[state.variant];
   document.querySelectorAll("[data-wing],[data-stage],[data-mode]").forEach(b=>{const key=b.dataset.wing?"wing":b.dataset.stage?"stage":"mode";b.classList.toggle("active",b.dataset[key]===state[key]);});
-  const group=findGroup();geneEvidence(group);syncUrl();
+  const group=findGroup();geneEvidence(group);syncUrl();showSourceScope();
   $("viewTitle").textContent=`${anatomical?"标准解剖结构":state.gene} / ${labelWing(state.wing)}`;
   $("viewSubtitle").textContent=`阶段 ${state.stage} / ${anatomical?"DAPI、最终翅脉与可选基因":names[state.variant]}`;
   if(anatomical){
@@ -191,18 +224,18 @@ function render(){
     notice($("showGenes").checked?"各基因来自独立样本集合。颜色区分基因，透明度表达相对信号；混色不能证明细胞共表达。":"当前仅显示解剖结构。开启基因层可叠加表达；最终翅脉不会重新拟合。");
     $("modeNote").textContent=state.mode==="styles"?"比较三种固定显示预设；图层可见性、颜色和缩放保持同步。":"DAPI、翅脉与基因层使用已核验的参考坐标；显示控件不改写科研数组。";
     if(state.mode==="styles")Object.entries(presets).forEach(([key,p])=>makeAnatomyTile(state.wing,state.stage,p.label,token,key));
-    else if(state.mode==="stages")["0.5","0.75","1.0"].forEach(s=>makeAnatomyTile(state.wing,s,`阶段 ${s}`,token));
-    else if(state.mode==="wings")["forewing","hindwing"].forEach(w=>makeAnatomyTile(w,state.stage,labelWing(w),token));
+    else if(state.mode==="stages")stageValues.forEach(s=>makeAnatomyTile(state.wing,s,`阶段 ${s}`,token));
+    else if(state.mode==="wings")wingValues.forEach(w=>makeAnatomyTile(w,state.stage,labelWing(w),token));
     else makeAnatomyTile(state.wing,state.stage,"标准DAPI / 翅脉 / 基因表达",token);
   }else{
     $("legend").hidden=state.mode==="sources";$("legend").querySelector("i").style.background=state.representation==="points"?"linear-gradient(90deg,#47bdff,#ffae36,#fff187)":"";
     $("legend").querySelector("span").textContent=state.representation==="points"?(group?.point_display?.sampling==="area_uniform"?"等面积采点 / P40、P50 / 蓝橘黄":"基线P50 / P85点位等级"):"相对表达 / 0–1";
     $("modeNote").textContent="仅显示表达，不叠加DAPI或翅脉；缩放与平移同步。";
-    notice(!group?"该组合尚无表达结果，不生成替代信号。":group.n===1?"当前为单图代表性结果，不代表群体共识。":state.mode==="stages"||state.mode==="wings"?"用于比较空间分布，不用于比较绝对mRNA数量；不同ROI增益和批次存在差异。":"");
+    notice(!group?"该组合尚无表达结果，不生成替代信号。":state.mode==="stages"||state.mode==="wings"?"用于比较空间分布，不用于比较绝对mRNA数量；不同ROI增益和批次存在差异。":"");
     if(state.mode==="sources"&&group)sources(group);
     else if(state.mode==="methods")data.variants.forEach(v=>makeExpressionTile(group,v,names[v],token));
-    else if(state.mode==="stages")["0.5","0.75","1.0"].forEach(s=>makeExpressionTile(findGroup(state.wing,s),state.variant,`阶段 ${s}`,token));
-    else if(state.mode==="wings")["forewing","hindwing"].forEach(w=>makeExpressionTile(findGroup(w),state.variant,labelWing(w),token));
+    else if(state.mode==="stages")stageValues.forEach(s=>makeExpressionTile(findGroup(state.wing,s),state.variant,`阶段 ${s}`,token));
+    else if(state.mode==="wings")wingValues.forEach(w=>makeExpressionTile(findGroup(w),state.variant,labelWing(w),token));
     else makeExpressionTile(group,state.variant,names[state.variant],token);
   }
 }
@@ -231,7 +264,7 @@ async function init(){
   if(!(anatomical?["single","styles","stages","wings"]:["single","methods","stages","wings","sources"]).includes(state.mode))state.mode="single";
   selectedGenes=[...new Set(selectedGenes)].filter(g=>data.genes.includes(g)).slice(0,4);
   if(state.variant!=="early_soft_q20"||state.mode==="methods")$("processingSettings").open=true;
-  $("gene").innerHTML=data.genes.map(g=>`<option value="${esc(g)}">${esc(g)}${data.processed_genes.includes(g)?"":" / 等待数据"}</option>`).join("");$("gene").disabled=false;
+  $("gene").replaceChildren(...data.genes.map(gene=>new Option(gene,gene)));$("gene").disabled=false;
   if(anatomical){
     applyPreset(query.get("displayPreset")||"structure");$("showGenes").checked=selectedGenes.length>0;
     for(const id of ["showDapi","showVein","showGenes"])if(query.has(id))$(id).checked=query.get(id)==="1";

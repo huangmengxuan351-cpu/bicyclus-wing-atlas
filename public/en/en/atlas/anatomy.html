@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Standard Anatomy &amp; Expression Layers</title><link rel="stylesheet" href="/en/atlas/styles.css?v=20261022-processing"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Standard Anatomy &amp; Expression Layers</title><link rel="stylesheet" href="/en/atlas/styles.css?v=provisional-atlases-20261114"></head>
 <body data-workspace="anatomy">
   <nav class="topbar"><a class="brand" href="/en/">Wing <i>Atlas</i><small>ANATOMY &amp; LAYER WORKSPACE / V2</small></a><div><a id="workspaceSwitch" href="/en/atlas/">Gene expression</a><a class="current-page" href="/en/anatomy/">Anatomy &amp; layers</a><a href="/en/predict/">Predict a wing</a><button id="copyLink">Copy view link</button></div></nav>
   <main class="shell">
@@ -39,7 +39,9 @@
       <header class="workspace-heading"><div><span class="eyebrow">02 / Anatomy &amp; expression</span><h2 id="viewTitle">Loading standard wings</h2><p id="viewSubtitle"></p></div><span id="statusBadge" class="badge">Confirmed vein package</span></header>
       <div class="mode-tabs" aria-label="Comparison layout"><button data-mode="single">Layer workspace</button><button data-mode="styles">Compare display styles</button><button data-mode="stages">Across stages</button><button data-mode="wings">Fore / Hind</button></div>
       <div class="toolbar"><div><button id="zoomOut" aria-label="Zoom out">-</button><output id="zoomValue">100%</output><button id="zoomIn" aria-label="Zoom in">+</button><button id="fit">Fit</button><button id="fullscreen">Fullscreen</button></div><span>Drag to pan &middot; Scroll to zoom &middot; Linked viewports</span></div>
-      <div id="notice" class="notice" role="status" hidden></div><div id="tiles" class="tiles single" aria-live="polite"></div>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <p id="sourceScope" class="notice source-scope-notice" role="status" hidden></p>
+      <div id="tiles" class="tiles single" aria-live="polite"></div>
       <div class="legend" id="legend"><span>Independent layer colors</span><div id="anatomyLegend" class="gene-legend"></div><small>Color mixing is qualitative; it does not prove cellular co-expression or absolute abundance.</small></div>
       <footer class="workspace-foot"><span id="modeNote">Approved vein geometry is unchanged.</span><a id="fullComparison" href="#" target="_blank" rel="noopener">Approved vein + DAPI</a></footer>
     </section>
@@ -51,5 +53,5 @@
       <details open><summary>Download anatomy</summary><div id="anatomyDownloads" class="download-list"></div></details>
       <div class="report-links"><a href="/anatomy-assets/display_comparison.html" target="_blank" rel="noopener">Six-wing display comparison</a><a href="/atlas-assets/main/index.html" target="_blank" rel="noopener">Combined archive gallery</a><a id="reportLink" target="_blank" rel="noopener">Selected gene report</a><a id="experimentLink" target="_blank" rel="noopener">Historical experiments</a><a id="manifestLink">Sample metadata (CSV)</a></div>
     </aside>
-  </main><script src="/en/atlas/workspaces.js?v=hh-hw-final-20261026"></script>
+  </main><script src="/en/atlas/workspaces.js?v=provisional-atlases-20261114"></script>
 <script src="/en/access-display.js?v=20261025"></script></body></html>

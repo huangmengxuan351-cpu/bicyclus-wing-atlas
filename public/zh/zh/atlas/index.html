@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Expression Atlas Workbench</title><link rel="stylesheet" href="/zh/atlas/styles.css?v=20261022-processing"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Expression Atlas Workbench</title><link rel="stylesheet" href="/zh/atlas/styles.css?v=provisional-atlases-20261114"></head>
 <body>
   <nav class="topbar"><a class="brand" href="/zh/">翅盘 <i>图谱</i><small>表达图谱工作区 / V2</small></a><div><a class="current-page" href="/zh/atlas/">基因表达</a><a id="workspaceSwitch" href="/zh/anatomy/">解剖与多基因图层</a><a href="/zh/predict/">翅型预测</a><button id="copyLink">复制当前视图链接</button></div></nav>
   <main class="shell">
@@ -23,6 +23,7 @@
       <div class="mode-tabs" role="group" aria-label="比较布局"><button data-mode="single" class="active">单图查看</button><button data-mode="stages">跨阶段比较</button><button data-mode="wings">前后翅比较</button><button data-mode="sources">来源图预览</button></div>
       <div class="toolbar"><div><button id="zoomOut" aria-label="缩小">-</button><output id="zoomValue">100%</output><button id="zoomIn" aria-label="放大">+</button><button id="fit">适应窗口</button><button id="fullscreen">全屏</button></div><span>拖动平移 · 滚轮缩放 · 视图同步</span></div>
       <div id="notice" class="notice" role="status" hidden></div>
+      <p id="sourceScope" class="notice source-scope-notice" role="status" hidden></p>
       <div id="tiles" class="tiles single" aria-live="polite"></div>
       <div class="legend" id="legend"><span>相对表达</span><i></i><span>0</span><span>1</span><small>显示范围固定为0–1；不同样本或基因之间未进行绝对强度校准。</small></div>
       <footer class="workspace-foot"><span id="modeNote">科研图层使用2048×2048参考网格，展示图为降采样预览。</span></footer>
@@ -36,5 +37,5 @@
       <div class="report-links"><a href="/atlas-assets/main/index.html" target="_blank" rel="noopener">完整归档图库</a><a id="reportLink" target="_blank" rel="noopener">完整图谱报告</a><a id="experimentLink" target="_blank" rel="noopener">历史分析记录</a><a id="manifestLink">全部样本元数据（CSV）</a></div>
     </aside>
   </main>
-  <script src="/zh/atlas/workspaces.js?v=hh-hw-final-20261026"></script>
+  <script src="/zh/atlas/workspaces.js?v=provisional-atlases-20261114"></script>
 <script src="/zh/access-display.js?v=20261025"></script></body></html>

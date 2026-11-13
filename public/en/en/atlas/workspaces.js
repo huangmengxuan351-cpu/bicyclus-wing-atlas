@@ -28,7 +28,27 @@ const colorFor = g=>geneColors[g]||palette[g]||"#a4c4d9";
 const findGroup = (w=state.wing,s=state.stage,g=state.gene)=>data.groups.find(i=>i.gene===g&&i.wing===w&&i.stage===s);
 const findAnatomy = (w=state.wing,s=state.stage)=>data.anatomy_cases.find(i=>i.wing===w&&i.stage===s);
 const notice = text=>{ $("notice").textContent=text;$("notice").hidden=!text; };
+const isProvisional = group => group?.n===1 || group?.n===2;
+const provisionalLabel = "Provisional";
+const stageValues = ["0.5","0.75","1.0"];
+const wingValues = ["forewing","hindwing"];
 if(query.get("embedded")==="1")document.body.classList.add("embedded");
+
+function showSourceScope(){
+  const wings=state.mode==="wings"?wingValues:[state.wing];
+  const stages=state.mode==="stages"?stageValues:[state.stage];
+  const genes=anatomical?($("showGenes").checked?selectedGenes:[]):[state.gene];
+  const groups=wings.flatMap(wing=>stages.flatMap(stage=>genes.map(gene=>findGroup(wing,stage,gene))));
+  const provisional=groups.filter(isProvisional);
+  const message=$("sourceScope");
+  message.hidden=provisional.length===0;
+  if(!provisional.length){message.textContent="";return;}
+  const [group]=provisional;
+  const sampleDetail=group.n===1?"one registered source image":"two source images";
+  message.textContent=provisional.length===1
+    ? `Provisional atlas: ${group.gene}, ${labelWing(group.wing)}, stage ${group.stage}, based on ${sampleDetail}. More source images are needed to assess whether the pattern recurs.`
+    : "Atlases marked Provisional are based on one or two source images. More source images are needed to assess whether these patterns recur.";
+}
 
 function boundedCache(cache,key,value,limit){cache.delete(key);cache.set(key,value);while(cache.size>limit)cache.delete(cache.keys().next().value);return value;}
 function loadImage(url){
@@ -90,13 +110,14 @@ function bindViewport(tile){
   tile.viewport.addEventListener("wheel",e=>{e.preventDefault();setZoom(state.zoom*Math.exp(-e.deltaY*.001));},{passive:false});
   tile.viewport.ondblclick=()=>{state.zoom=1;state.x=state.y=0;redraw();};
 }
-function tileElement(title,note,count=""){
+function tileElement(title,note,count="",scopeLabel=""){
   const el=document.createElement("article");el.className="tile";
-  el.innerHTML=`<header class="tile-header"><strong>${esc(title)}</strong><small>${esc(count)}</small></header><div class="viewport"><canvas aria-label="${esc(title)}"></canvas><span class="loading-label">Loading layers...</span></div><div class="tile-note">${esc(note)}</div>`;
+  const scope=scopeLabel?`<small class="source-scope-badge">${esc(scopeLabel)}</small>`:"";
+  el.innerHTML=`<header class="tile-header"><strong>${esc(title)}</strong><small>${esc(count)}</small>${scope}</header><div class="viewport"><canvas aria-label="${esc(title)}"></canvas><span class="loading-label">Loading layers...</span></div><div class="tile-note">${esc(note)}</div>`;
   $("tiles").append(el);return el;
 }
 function makeExpressionTile(group,variant,title,token){
-  const el=tileElement(title,group?`${labelWing(group.wing)} / ${group.stage} / ${names[variant]}`:"Missing data is not inferred.",group?`n = ${group.n}`:"No data");
+  const el=tileElement(title,group?`${labelWing(group.wing)} / ${group.stage} / ${names[variant]}`:"Missing data is not inferred.",group?`n = ${group.n}`:"No data",isProvisional(group)?provisionalLabel:"");
   if(!group){el.querySelector(".loading-label").textContent="No accepted samples for this combination";return;}
   const tile={canvas:el.querySelector("canvas"),viewport:el.querySelector(".viewport"),loaded:false};tiles.push(tile);bindViewport(tile);
   const url=group.variants[variant].images[state.representation==="points"?"points_layer":"heatmap"];
@@ -105,7 +126,9 @@ function makeExpressionTile(group,variant,title,token){
 async function makeAnatomyTile(wing,stage,title,token,preset=null){
   const anatomy=findAnatomy(wing,stage);
   const candidates=$("showGenes").checked?selectedGenes.map(g=>findGroup(wing,stage,g)).filter(Boolean):[];
-  const el=tileElement(title,`${labelWing(wing)} / ${stage} / ${candidates.map(g=>`${g.gene}: n=${g.n}`).join(" / ")||"DAPI and vein only"}`,anatomy?`${anatomy.branch_count} branches`:"No anatomy");
+  const provisionalLayers=candidates.filter(isProvisional).map(g=>`${g.gene} (n=${g.n})`);
+  const scope=provisionalLayers.length?`${provisionalLabel}: ${provisionalLayers.join(", ")}`:"";
+  const el=tileElement(title,`${labelWing(wing)} / ${stage} / ${candidates.map(g=>`${g.gene}: n=${g.n}`).join(" / ")||"DAPI and vein only"}`,anatomy?`${anatomy.branch_count} branches`:"No anatomy",scope);
   if(!anatomy){el.querySelector(".loading-label").textContent="No validated anatomy data";return;}
   if(candidates.some(g=>g.coordinate_frame!==anatomy.coordinate_frame)){
     el.querySelector(".loading-label").textContent="Overlay blocked: incompatible coordinate frames";
@@ -124,7 +147,7 @@ async function makeAnatomyTile(wing,stage,title,token,preset=null){
 function geneEvidence(group){
   $("methodHelp").textContent=tips[state.variant];$("metrics").replaceChildren();$("downloads").replaceChildren();
   if(!group){$("facts").innerHTML=`<dt>Gene</dt><dd>${esc(state.gene)}</dd><dt>Extracted expression</dt><dd>Not available yet</dd>`;$("reviewStatus").textContent="No extracted data for this combination. No surrogate expression is displayed.";$("statusBadge").textContent="Awaiting extracted data";$("fullComparison").hidden=true;const withdrawn=data.withdrawn_groups?.[`${state.gene}__${state.wing}__stage_${state.stage.replace(".","_")}`];if(withdrawn){$("reviewStatus").textContent=withdrawn.reason_en;$("statusBadge").textContent="Withdrawn: stage conflict";}return;}
-  const facts={"Inspected gene":group.gene+(anatomical&&!$("showGenes").checked?" / not displayed":""),"Gene source images":`${group.n}${group.n===1?" / single-sample map":""}`,"Wing / stage":`${labelWing(group.wing)} / ${group.stage}`,"Layer size":"2048 x 2048","Coordinate protocol":group.protocol};
+  const facts={"Inspected gene":group.gene+(anatomical&&!$("showGenes").checked?" / not displayed":""),"Gene source images":`${group.n}${isProvisional(group)?` / ${provisionalLabel}`:""}`,"Wing / stage":`${labelWing(group.wing)} / ${group.stage}`,"Layer size":"2048 x 2048","Coordinate protocol":group.protocol};
   $("facts").innerHTML=Object.entries(facts).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
   $("reviewStatus").textContent=group.origin==="legacy"?"Historical sample quality was accepted; registration remains experimental.":"Sample usability was accepted. The selected safe registration candidate remains pending method-level human confirmation.";
   $("statusBadge").textContent="Registration needs confirmation";
@@ -153,6 +176,11 @@ function geneControls(){
     const group=findGroup(state.wing,state.stage,gene),a=findAnatomy(),compatible=!!group&&a?.coordinate_frame===group.coordinate_frame;
     const row=document.createElement("div");row.className="gene-control";
     row.innerHTML=`<label class="check"><input type="checkbox" ${selectedGenes.includes(gene)?"checked":""} ${compatible?"":"disabled"}><span>${esc(gene)}</span><small>${group?`n=${group.n}${compatible?"":" / frame differs"}`:"No data"}</small></label><div><input aria-label="${esc(gene)} color" type="color" value="${colorFor(gene)}" ${compatible?"":"disabled"}><input aria-label="${esc(gene)} opacity" type="range" min="0" max="1" step="0.05" value="${geneOpacity[gene]??.9}" ${compatible?"":"disabled"}></div>`;
+    if(isProvisional(group)){
+      const count=row.querySelector("small");
+      count.classList.add("source-scope-badge");
+      count.textContent+=` · ${provisionalLabel}`;
+    }
     row.querySelector("input[type=checkbox]").onchange=e=>{
       if(e.target.checked&&selectedGenes.length>=4){e.target.checked=false;notice("Choose up to four genes for a readable overlay.");return;}
       selectedGenes=e.target.checked?[...selectedGenes,gene]:selectedGenes.filter(g=>g!==gene);if(e.target.checked)$("showGenes").checked=true;render();
@@ -175,9 +203,14 @@ function render(){
   if(!data)return;
   const token=++generation;tiles=[];$("tiles").replaceChildren();$("tiles").className=`tiles ${state.mode==="styles"?"methods":state.mode}`;
   $("gene").value=state.gene;$("variant").value=state.variant;$("representation").value=state.representation;$("variant").disabled=state.mode==="methods";
+  for(const option of $("gene").options){
+    const gene=option.value;
+    const candidate=findGroup(state.wing,state.stage,gene);
+    option.textContent=gene+(isProvisional(candidate)?` · ${provisionalLabel} (n=${candidate.n})`:data.processed_genes.includes(gene)?"":" / awaiting data");
+  }
   $("processingLabel").textContent=state.mode==="methods"?"Three-method comparison":names[state.variant];
   document.querySelectorAll("[data-wing],[data-stage],[data-mode]").forEach(b=>{const key=b.dataset.wing?"wing":b.dataset.stage?"stage":"mode";b.classList.toggle("active",b.dataset[key]===state[key]);});
-  const group=findGroup();geneEvidence(group);syncUrl();
+  const group=findGroup();geneEvidence(group);syncUrl();showSourceScope();
   $("viewTitle").textContent=`${anatomical?"Standard anatomy":state.gene} / ${labelWing(state.wing)}`;
   $("viewSubtitle").textContent=`Stage ${state.stage} / ${anatomical?"DAPI + confirmed vein + optional genes":names[state.variant]}`;
   if(anatomical){
@@ -186,18 +219,18 @@ function render(){
     notice($("showGenes").checked?"Qualitative overlays of independent samples. Gene hue identifies the layer; opacity carries relative signal. Color mixing does not prove cellular co-expression.":"Anatomy-only view. Turn on gene layers to add expression; approved vein geometry is never re-fitted.");
     $("modeNote").textContent=state.mode==="styles"?"Three fixed display presets. Layer visibility, colors and zoom are shared.":"DAPI, vein and gene layers share verified coordinates. Display controls do not alter scientific arrays.";
     if(state.mode==="styles")Object.entries(presets).forEach(([key,p])=>makeAnatomyTile(state.wing,state.stage,p.label,token,key));
-    else if(state.mode==="stages")["0.5","0.75","1.0"].forEach(s=>makeAnatomyTile(state.wing,s,`Stage ${s}`,token));
-    else if(state.mode==="wings")["forewing","hindwing"].forEach(w=>makeAnatomyTile(w,state.stage,labelWing(w),token));
+    else if(state.mode==="stages")stageValues.forEach(s=>makeAnatomyTile(state.wing,s,`Stage ${s}`,token));
+    else if(state.mode==="wings")wingValues.forEach(w=>makeAnatomyTile(w,state.stage,labelWing(w),token));
     else makeAnatomyTile(state.wing,state.stage,"Standard DAPI / vein / expression",token);
   }else{
     $("legend").hidden=state.mode==="sources";$("legend").querySelector("i").style.background=state.representation==="points"?"linear-gradient(90deg,#47bdff,#ffae36,#fff187)":"";
     $("legend").querySelector("span").textContent=state.representation==="points"?(group?.point_display?.sampling==="area_uniform"?"Area-uniform samples / P40, P50 / blue-orange-yellow":"Baseline P50 / P85 tiers"):"Relative expression / 0-1";
     $("modeNote").textContent="Pure expression, no DAPI or vein background. Linked zoom and pan.";
-    notice(!group?"No extracted data for this combination. No expression is invented.":group.n===1?"Single-sample representative map, not a population consensus.":state.mode==="stages"||state.mode==="wings"?"Compare spatial patterns, not absolute mRNA abundance. ROI gains and batches differ.":"");
+    notice(!group?"No extracted data for this combination. No expression is invented.":state.mode==="stages"||state.mode==="wings"?"Compare spatial patterns, not absolute mRNA abundance. ROI gains and batches differ.":"");
     if(state.mode==="sources"&&group)sources(group);
     else if(state.mode==="methods")data.variants.forEach(v=>makeExpressionTile(group,v,names[v],token));
-    else if(state.mode==="stages")["0.5","0.75","1.0"].forEach(s=>makeExpressionTile(findGroup(state.wing,s),state.variant,`Stage ${s}`,token));
-    else if(state.mode==="wings")["forewing","hindwing"].forEach(w=>makeExpressionTile(findGroup(w),state.variant,labelWing(w),token));
+    else if(state.mode==="stages")stageValues.forEach(s=>makeExpressionTile(findGroup(state.wing,s),state.variant,`Stage ${s}`,token));
+    else if(state.mode==="wings")wingValues.forEach(w=>makeExpressionTile(findGroup(w),state.variant,labelWing(w),token));
     else makeExpressionTile(group,state.variant,names[state.variant],token);
   }
 }
@@ -226,7 +259,7 @@ async function init(){
   if(!(anatomical?["single","styles","stages","wings"]:["single","methods","stages","wings","sources"]).includes(state.mode))state.mode="single";
   selectedGenes=[...new Set(selectedGenes)].filter(g=>data.genes.includes(g)).slice(0,4);
   if(state.variant!=="early_soft_q20"||state.mode==="methods")$("processingSettings").open=true;
-  $("gene").innerHTML=data.genes.map(g=>`<option value="${esc(g)}">${esc(g)}${data.processed_genes.includes(g)?"":" / awaiting data"}</option>`).join("");$("gene").disabled=false;
+  $("gene").replaceChildren(...data.genes.map(gene=>new Option(gene,gene)));$("gene").disabled=false;
   if(anatomical){
     applyPreset(query.get("displayPreset")||"structure");$("showGenes").checked=selectedGenes.length>0;
     for(const id of ["showDapi","showVein","showGenes"])if(query.has(id))$(id).checked=query.get(id)==="1";
