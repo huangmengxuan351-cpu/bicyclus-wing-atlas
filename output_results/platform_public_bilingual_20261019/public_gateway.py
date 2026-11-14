@@ -15,12 +15,15 @@ import re
 import secrets
 import sqlite3
 import sys
+import time
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from threading import Lock
 from urllib.parse import quote, unquote, urlsplit
 
 BASE = Path(__file__).resolve().parent
@@ -37,6 +40,9 @@ MAX_UPLOAD = 64 * 1024 * 1024
 SESSION_COOKIE = 'wing_atlas_visitor'
 DOWNLOAD_EXTENSIONS = frozenset(('.png','.npy','.npz','.csv','.json','.txt','.md','.tif','.tiff','.zip'))
 LOG = logging.getLogger('public')
+JOBS = {}
+JOB_LOCK = Lock()
+JOB_EXECUTOR = ThreadPoolExecutor(max_workers=1, thread_name_prefix='prediction')
 
 
 def basic(role='viewer'):
@@ -67,6 +73,30 @@ def owns_run(visitor, run_id):
     with sqlite3.connect(INSTANCE/'visitors.sqlite3', timeout=20) as db:
         row = db.execute('SELECT visitor FROM runs WHERE run_id=?', (run_id,)).fetchone()
         return row is not None and secrets.compare_digest(row[0], visitor)
+
+
+def prediction_request(visitor, route, data, headers):
+    status, response_headers, body = upstream(route, 'POST', data, headers)
+    if status == 200 and route == '/api/predict':
+        result = json.loads(body)
+        if result.get('run_id'):
+            record_run(visitor, result['run_id'])
+    return status, response_headers.get('Content-Type', 'application/json'), body
+
+
+def start_prediction_job(visitor, route, data, headers):
+    with JOB_LOCK:
+        for job_id, (_, started, future) in list(JOBS.items()):
+            if future.done() and time.monotonic() - started > 600:
+                del JOBS[job_id]
+        if any(not future.done() for _, _, future in JOBS.values()):
+            return None
+        if len(JOBS) >= 64:
+            del JOBS[next(iter(JOBS))]
+        job_id = secrets.token_hex(24)
+        future = JOB_EXECUTOR.submit(prediction_request, visitor, route, data, headers)
+        JOBS[job_id] = visitor, time.monotonic(), future
+        return job_id
 
 
 def labels():
@@ -140,7 +170,7 @@ class Handler(BaseHTTPRequestHandler):
                    'X-Frame-Options':'SAMEORIGIN', 'Content-Security-Policy':"frame-ancestors 'self'",
                    'X-Atlas-Language':LANGUAGE, 'X-Atlas-Deployment':'independent-public-'+LANGUAGE}
         headers.update(extra or {})
-        if getattr(self,'new_visitor',False):
+        if getattr(self,'new_visitor',False) and self.command=='POST' and status in (200,202):
             # Secure is correct for browser requests through HTTPS tunnels, and also
             # accepted by modern browsers for the loopback address used in QA.
             headers['Set-Cookie']=f'{SESSION_COOKIE}={self.visitor}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000'
@@ -169,14 +199,26 @@ class Handler(BaseHTTPRequestHandler):
             result=json.loads(body)
             result['items']=[item for item in result['items'] if owns_run(self.visitor,item['run_id'])]
             body=json.dumps(result,ensure_ascii=False).encode()
-        if status==200 and method=='POST' and route=='/api/predict':
-            result=json.loads(body)
-            if result.get('run_id'): record_run(self.visitor,result['run_id'])
         extra={k:v for k,v in headers.items() if k.lower() in ('content-disposition','x-atlas-asset')}
         if export:
             extra['Content-Disposition']='attachment; filename="'+re.sub(r'[^A-Za-z0-9_.-]','_',Path(urlsplit(route).path).name)+'"'
             extra['X-Atlas-Asset']='authorized-original'
         return self.send(body,status,headers.get('Content-Type','application/octet-stream'),extra)
+
+    def prediction_status(self, job_id):
+        with JOB_LOCK:
+            job = JOBS.get(job_id)
+        if job is None or not secrets.compare_digest(job[0], self.visitor):
+            return self.send({'error':'Prediction job unavailable.'}, 404)
+        future = job[2]
+        if not future.done():
+            return self.send({'job_id':job_id}, 202)
+        try:
+            status, content_type, body = future.result()
+        except Exception as exc:
+            LOG.error('PREDICTION_JOB_FAILED %s', type(exc).__name__)
+            return self.send({'error':'Prediction service temporarily unavailable.'}, 500)
+        return self.send(body, status, content_type)
 
     def protected_download(self,path):
         role=authenticate(self.headers.get('Authorization',''))
@@ -216,7 +258,16 @@ class Handler(BaseHTTPRequestHandler):
                 try: run_id=str(json.loads(body).get('run_id',''))
                 except ValueError: return self.send({'error':'Invalid JSON.'},400)
                 if not owns_run(self.visitor,run_id): return self.send({'error':'Prediction record unavailable.'},403)
-            return self.proxy(path,'POST',body)
+            if self.headers.get('Prefer') == 'respond-async':
+                job_id = start_prediction_job(self.visitor, path, body, dict(self.headers))
+                if job_id is None:
+                    return self.send({'error':'Another prediction is running. Please wait.'}, 409)
+                return self.send({'job_id':job_id}, 202)
+            status, content_type, response = prediction_request(self.visitor, path, body, self.headers)
+            return self.send(response, status, content_type)
+        job = re.fullmatch(r'/api/jobs/([a-f0-9]{48})', path)
+        if job:
+            return self.prediction_status(job[1])
         if path=='/api/access-policy':
             return self.send({'role':'public','can_download':False,'download_password_required':True,
                               'download_entry':'/downloads/','preview_max_edge':960})

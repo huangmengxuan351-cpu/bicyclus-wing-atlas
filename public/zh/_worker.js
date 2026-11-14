@@ -126,7 +126,7 @@ export default {
     if(/^\/public-packs\/\d{4}\.bin$/.test(path)&&['GET','HEAD'].includes(request.method))return asset(request,env,path.replace('/public-packs/','/packs/'));
     if(/^\/preview\/[a-f0-9]{40}\.png$/.test(path)&&['GET','HEAD'].includes(request.method))return dynamic(request,env,ctx);
     if(STATIC_ROUTES[path] && ['GET','HEAD'].includes(request.method))return asset(request,env,STATIC_ROUTES[path]);
-    if(/^\/api\/(?:model-info|history|health|result\/[A-Za-z0-9_.-]+|file\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)$/.test(path)&&['GET','HEAD'].includes(request.method))return dynamic(request,env,ctx);
+    if(/^\/api\/(?:model-info|history|health|jobs\/[a-f0-9]{48}|result\/[A-Za-z0-9_.-]+|file\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)$/.test(path)&&['GET','HEAD'].includes(request.method))return dynamic(request,env,ctx);
     if(['/api/predict','/api/re-align'].includes(path)&&request.method==='POST')return dynamic(request,env,ctx);
     if(path==='/favicon.ico')return new Response(null,{status:204});
     // Explicit static allowlist; no raw data, admin, uploads or alternate-language tree.

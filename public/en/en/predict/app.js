@@ -422,6 +422,31 @@ async function predictionResponse(response) {
   return payload;
 }
 
+async function waitForPrediction(response) {
+  const payload = await predictionResponse(response);
+  if (response.status !== 202) return payload;
+  if (!/^[a-f0-9]{48}$/.test(payload.job_id)) {
+    throw new Error("The prediction service did not return a valid job ID.");
+  }
+
+  const deadline = Date.now() + 300000;
+  let delay = 2500;
+  while (Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, delay));
+    const status = await fetch(`/api/jobs/${payload.job_id}`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(12000),
+    }).catch(() => null);
+    if (status && status.ok && status.status !== 202) return predictionResponse(status);
+    if (status && ![202, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526].includes(status.status)) {
+      return predictionResponse(status);
+    }
+    await status?.body?.cancel().catch(() => {});
+    delay = Math.min(8000, delay * 1.5);
+  }
+  throw new Error("The prediction took too long. Check recent results or try again shortly.");
+}
+
 applyManual.addEventListener("click", async () => {
   if (!currentPayload?.run_id) return;
   applyManual.disabled = true;
@@ -431,7 +456,7 @@ applyManual.addEventListener("click", async () => {
   try {
     const response = await fetch("/api/re-align", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Prefer: "respond-async" },
       body: JSON.stringify({
         run_id: currentPayload.run_id,
         family: manualFamily.value,
@@ -442,7 +467,7 @@ applyManual.addEventListener("click", async () => {
         flip_x: flipControl.checked,
       }),
     });
-    const payload = await predictionResponse(response);
+    const payload = await waitForPrediction(response);
     renderResult(payload);
     updateManualTransform();
     manualPanel.hidden = false;
@@ -473,8 +498,12 @@ form.addEventListener("submit", async (event) => {
     if (maskInput.files?.[0]) {
       data.append("mask", maskInput.files[0]);
     }
-    const response = await fetch("/api/predict", { method: "POST", body: data });
-    const payload = await predictionResponse(response);
+    const response = await fetch("/api/predict", {
+      method: "POST",
+      headers: { Prefer: "respond-async" },
+      body: data,
+    });
+    const payload = await waitForPrediction(response);
     renderResult(payload);
     await loadHistory().catch(() => {});
   } catch (error) {

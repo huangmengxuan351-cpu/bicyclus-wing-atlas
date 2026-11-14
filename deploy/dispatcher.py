@@ -59,7 +59,7 @@ class Handler(BaseHTTPRequestHandler):
         port = 8890 if language == 'zh' else 8891
         origin = 'http://127.0.0.1:' + str(port)
         headers = {key: value for key, value in self.headers.items()
-                   if key.lower() in ('content-type', 'accept', 'cookie', 'range')}
+                   if key.lower() in ('content-type', 'accept', 'cookie', 'range', 'prefer')}
         # ModelScope reserves Authorization. Pages forwards the user's Basic header
         # as X-Atlas-Download-Authorization; the validated private gateway checks it.
         authorization = self.headers.get('X-Atlas-Download-Authorization', '')

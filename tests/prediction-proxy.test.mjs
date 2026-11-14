@@ -99,6 +99,20 @@ for (const language of ['zh','en']) {
     assert.equal(calls,1);
   });
 
+  test(`${language}: route job polling using the same visitor session`,async t => {
+    const job = 'a'.repeat(48);
+    t.mock.method(globalThis,'fetch',async (url,options) => {
+      assert.equal(String(url),origin+'/api/jobs/'+job);
+      assert.equal(options.headers.get('Cookie'),'wing_atlas_visitor=test');
+      return Response.json({job_id:job},{status:202});
+    });
+    const result = await worker.fetch(new Request(site+'/api/jobs/'+job,{
+      headers:{Cookie:'wing_atlas_visitor=test'},
+    }),env);
+    assert.equal(result.status,202);
+    assert.deepEqual(await result.json(),{job_id:job});
+  });
+
   const frontend = await readFile(new URL(`../public/${language}/${language}/predict/app.js`,import.meta.url),'utf8');
   const start=frontend.indexOf('async function predictionResponse(');
   const end=frontend.indexOf('\napplyManual.addEventListener',start);
