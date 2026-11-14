@@ -61,18 +61,25 @@ async function dynamic(request,env,ctx) {
   headers.delete('Origin');
   const prefix=upstream.pathname.replace(/\/$/,'');
   const target=new URL(prefix+incoming.pathname+incoming.search,upstream.origin);
+  const declaredLength=request.headers.get('Content-Length');
+  let framing=declaredLength===null?'stream':'fixed-length';
   try {
     let response,attempts=0;
     const retryable=['GET','HEAD'].includes(request.method);
     let body=retryable?undefined:request.body;
     // A generic ReadableStream makes Workers use chunked encoding. The Python
     // origin and its hosting proxy require the upload's declared byte length.
-    if(body && request.headers.has('Content-Length')) {
-      const length=Number(request.headers.get('Content-Length'));
+    if(body && declaredLength!==null) {
+      const length=Number(declaredLength);
       if(!Number.isSafeInteger(length)||length<0)return reply({error:'Invalid upload length.'},400);
-      const fixed=new FixedLengthStream(length);
-      ctx.waitUntil(body.pipeTo(fixed.writable).catch(()=>{}));
-      body=fixed.readable;
+      if (headers.get('Prefer')==='respond-async' && length<=2*1024*1024) {
+        body=await request.arrayBuffer();
+        framing='bounded-buffer';
+      } else {
+        const fixed=new FixedLengthStream(length);
+        ctx.waitUntil(body.pipeTo(fixed.writable).catch(()=>{}));
+        body=fixed.readable;
+      }
     }
     for(let attempt=0;attempt<2;attempt++) {
       attempts++;
@@ -85,7 +92,7 @@ async function dynamic(request,env,ctx) {
     }
     const resultHeaders=new Headers(response.headers);resultHeaders.set('Cache-Control','no-store');resultHeaders.set('X-Atlas-Language',LANGUAGE);
     resultHeaders.set('X-Atlas-Origin-Attempts',String(attempts));
-    if(request.method==='POST')resultHeaders.set('X-Atlas-Upload-Framing',request.headers.has('Content-Length')?'fixed-length':'stream');
+    if(request.method==='POST')resultHeaders.set('X-Atlas-Upload-Framing',framing);
     const location=resultHeaders.get('Location');
     if(location?.startsWith(upstream.origin+prefix+'/'))resultHeaders.set('Location',incoming.origin+location.slice((upstream.origin+prefix).length));
     return new Response(response.body,{status:response.status,headers:resultHeaders});

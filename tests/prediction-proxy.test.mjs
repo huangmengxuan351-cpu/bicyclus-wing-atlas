@@ -71,6 +71,19 @@ for (const language of ['zh','en']) {
     assert.equal(result.status,503);
   });
 
+  test(`${language}: forward an asynchronous image upload with a bounded, replayable body`,async t => {
+    const bytes = Uint8Array.of(0,255,216,13,10,217);
+    t.mock.method(globalThis,'fetch',async (_,options) => {
+      assert.ok(options.body instanceof ArrayBuffer);
+      assert.deepEqual(new Uint8Array(options.body),bytes);
+      return Response.json({job_id:'test'},{status:202});
+    });
+    const response=await worker.fetch(new Request(site+'/api/predict',{method:'POST',body:bytes,
+      headers:{Origin:site,'Content-Length':String(bytes.length),Prefer:'respond-async'}}),env);
+    assert.equal(response.status,202);
+    assert.equal(response.headers.get('X-Atlas-Upload-Framing'),'bounded-buffer');
+  });
+
   test(`${language}: anonymous originals remain protected`,async t => {
     let called=false;
     t.mock.method(globalThis,'fetch',async () => {called=true;return Response.json({});});
