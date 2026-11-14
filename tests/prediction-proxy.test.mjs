@@ -124,6 +124,21 @@ for (const language of ['zh','en']) {
     assert.deepEqual(await parse(Response.json(payload)),payload);
   });
 
+  test(`${language}: retry submissions only after an upstream handshake failure`,async () => {
+    for (const [initialStatus,expectedCalls] of [[525,2],[524,1],[503,1]]) {
+      let requests=0;
+      const submit=vm.runInNewContext(frontend.slice(start,end)+'\nsubmitPrediction;',{
+        setTimeout: callback => callback(),
+        fetch: async () => ++requests === 1
+          ? new Response('upstream error',{status:initialStatus})
+          : Response.json({run_id:'test'}),
+      });
+      if (initialStatus === 525) assert.equal((await submit('/api/predict',{})).run_id,'test');
+      else await assert.rejects(submit('/api/predict',{}),new RegExp('HTTP '+initialStatus));
+      assert.equal(requests,expectedCalls);
+    }
+  });
+
   test(`${language}: explain non-JSON gateway errors without a JSON parse exception`,async () => {
     await assert.rejects(parse(new Response('<html>Gateway timeout</html>',{status:524})),error => {
       assert.match(error.message,/HTTP 524/);

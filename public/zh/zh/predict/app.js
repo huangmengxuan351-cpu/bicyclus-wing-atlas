@@ -452,6 +452,18 @@ async function waitForPrediction(response) {
   throw new Error("预测任务等待超时。请查看近期结果，或稍后再试。");
 }
 
+async function submitPrediction(url, options) {
+  let response = await fetch(url, options);
+  for (const delay of [800, 2000]) {
+    // 525 means the upstream TLS handshake failed before it could read the request.
+    if (response.status !== 525) break;
+    await response.body?.cancel().catch(() => {});
+    await new Promise(resolve => setTimeout(resolve, delay));
+    response = await fetch(url, options);
+  }
+  return waitForPrediction(response);
+}
+
 applyManual.addEventListener("click", async () => {
   if (!currentPayload?.run_id) return;
   applyManual.disabled = true;
@@ -459,7 +471,7 @@ applyManual.addEventListener("click", async () => {
   manualActionStatus.textContent = "正在提交校准，并重新计算翅型与阶段…";
   manualActionStatus.className = "manual-action-status working";
   try {
-    const response = await fetch("/api/re-align", {
+    const payload = await submitPrediction("/api/re-align", {
       method: "POST",
       headers: { "Content-Type": "application/json", Prefer: "respond-async" },
       body: JSON.stringify({
@@ -472,7 +484,6 @@ applyManual.addEventListener("click", async () => {
         flip_x: flipControl.checked,
       }),
     });
-    const payload = await waitForPrediction(response);
     renderResult(payload);
     updateManualTransform();
     manualPanel.hidden = false;
@@ -503,12 +514,11 @@ form.addEventListener("submit", async (event) => {
     if (maskInput.files?.[0]) {
       data.append("mask", maskInput.files[0]);
     }
-    const response = await fetch("/api/predict", {
+    const payload = await submitPrediction("/api/predict", {
       method: "POST",
       headers: { Prefer: "respond-async" },
       body: data,
     });
-    const payload = await waitForPrediction(response);
     renderResult(payload);
     await loadHistory().catch(() => {});
   } catch (error) {
